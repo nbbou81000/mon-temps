@@ -68,5 +68,8 @@ t('barèmes : SMIC daté et croissant', datesOk(bar.smic) && bar.smic.every((x, 
 t('barèmes : indice minimum daté', datesOk(bar.indiceMinimum) && bar.indiceMinimum.every((x) => x.indice >= 300 && x.indice <= 500));
 t('barèmes : grilles valides', (bar.grilles || []).every((g) => g.nom && Array.isArray(g.echelons) && g.echelons.every((e) => e.indice >= 300 && e.indice <= 1100)));
 const el = contenu.elections; t('élections : dates cohérentes', !el || (/^\d{4}-\d{2}-\d{2}$/.test(el.dateScrutin) && (!el.ouvertureVote || el.ouvertureVote <= el.dateScrutin)));
+const pr = lire('primes.json'); const idsP = new Set();
+t('primes : liste', Array.isArray(pr.liste) && pr.liste.length > 0);
+for (const x of pr.liste) { t(`prime ${x.id} : identifiant unique`, x.id && !idsP.has(x.id)); idsP.add(x.id); t(`prime ${x.id} : mode connu`, ['points', 'pourcentage', 'montant', 'points-saisis', 'saisie'].includes(x.mode)); t(`prime ${x.id} : valeur numérique`, typeof x.valeur === 'number' && x.valeur >= 0); }
 console.log(`${ok} tests réussis, ${ko} en échec`);
 if (ko) process.exit(1);

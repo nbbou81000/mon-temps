@@ -321,3 +321,44 @@ content:
         type: string
         list: true
         description: Valeurs possibles, smic, grilles, point, indiceMin
+
+  - name: primes
+    label: Primes proposées dans « Mon salaire »
+    type: file
+    path: config/primes.json
+    format: json
+    fields:
+      - name: liste
+        label: Primes
+        type: object
+        list: true
+        description: Chaque agent coche celles qu'il touche. Pour ajouter une prime, ajouter une ligne.
+        fields:
+          - { name: id, label: Identifiant court, sans espace ni accent (ex. prime-tutorat), type: string, required: true, pattern: '^[a-z0-9-]+$' }
+          - { name: nom, label: Nom de la prime, type: string, required: true }
+          - { name: categorie, label: Rubrique (ex. Ségur et soins, Primes liées au poste), type: string }
+          - name: mode
+            label: Façon de calculer
+            type: select
+            required: true
+            options:
+              values:
+                - { value: points, label: Nombre de points d'indice (ex. CTI) }
+                - { value: pourcentage, label: Pourcentage du traitement }
+                - { value: montant, label: Montant fixe par mois }
+                - { value: points-saisis, label: Points d'indice saisis par l'agent (ex. NBI) }
+                - { value: saisie, label: Montant saisi par l'agent }
+          - { name: valeur, label: Valeur (points, pourcentage ou euros selon la façon de calculer), type: number }
+          - { name: aide, label: Explication courte affichée sous le nom, type: text }
+          - { name: source, label: Source (texte officiel), type: string }
+          - name: statut
+            label: Statut
+            type: select
+            options:
+              values:
+                - { value: officiel, label: Officiel }
+                - { value: annonce, label: À confirmer (affiche « provisoire ») }
+      - name: aValider
+        label: Autres primes à confirmer (identifiants)
+        type: string
+        list: true

@@ -5,6 +5,8 @@ import { esc, ic, chevron, enteteRetour, mailto, badgeProvisoire } from './commu
 import { barreHaut } from './entete.js';
 import { iconeReseau, NOMS } from './reseaux.js';
 import { carteElections, lignePaie } from './extras.js';
+import { carteMesPrimes, brancherPrimes, baseProfil, totalPrimes } from './primes.js';
+const primesAuto = () => { const t = totalPrimes(baseProfil(partPayee)).total; return t ? Math.round(t * 100) / 100 : ''; };
 
 const eur = (v, d = 2) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number.isFinite(v) ? v : 0);
 const num = (el, id) => { const v = Number(String(el.querySelector('#' + id).value).replace(',', '.')); return Number.isFinite(v) ? v : 0; };
@@ -69,13 +71,14 @@ export function vueSalaire(p) {
           ${note('L\'indice majoré est écrit en haut de ta fiche de paie (« IM » ou « indice »). Il dépend de ton grade et de ton échelon.')}
           <div id="res-base" class="res"></div>
         </section>
+        ${carteMesPrimes()}
         <section class="carte" style="display:flex;flex-direction:column;gap:.75rem">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><h2>Ce que mes saisies doivent rapporter</h2></div>
           <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:1.125rem;font-stretch:85%">${esc(M.MOIS[m - 1].replace(/^./, (c) => c.toUpperCase()))} ${y}</b><div class="fleches"><a href="#/salaire/${voisin(-1)}" aria-label="Mois précédent">${ic('gauche')}</a><a href="#/salaire/${voisin(1)}" aria-label="Mois suivant">${ic('droite')}</a></div></div>
           <div id="res-mois" class="res"></div>
           ${note('À comparer avec ta fiche de paie. Ces éléments sont souvent versés avec un ou deux mois de décalage.')}
         </section>
-        ${note(`Valeur du point d'indice : ${String(R.valeurPointMensuel).replace('.', ',')} € par mois.${badgeProvisoire(S.cfg, 'baremes.point')} SMIC : ${eur(R.smicMensuel)} brut par mois à temps plein.${badgeProvisoire(S.cfg, 'baremes.smic')} ${AVERT} Les primes (Ségur, prime de service, indemnité de sujétion…) ne sont pas comprises.`)}
+        ${note(`Valeur du point d'indice : ${String(R.valeurPointMensuel).replace('.', ',')} € par mois.${badgeProvisoire(S.cfg, 'baremes.point')} SMIC : ${eur(R.smicMensuel)} brut par mois à temps plein.${badgeProvisoire(S.cfg, 'baremes.smic')} ${AVERT} Les primes ne comptent que si tu les coches ci-dessus.`)}
       </div>`,
     apres(el) {
       const e = M.elementsPaie(`${cle}-01`, M.iso(y, m, M.joursDansMois(y, m)), S.etat, S.cfg);
@@ -98,15 +101,22 @@ export function vueSalaire(p) {
           ligne('Total attendu en plus du traitement', im >= 300 ? eur(n + d + hs) : eur(d), true) +
           `<p class="petit" style="margin:.25rem 0 0">Dépassements comptés comme s'ils étaient payés (et non récupérés), au coefficient ${String(R.coefHeuresSup1).replace('.', ',')}.${badgeProvisoire(S.cfg, 'regles.coefHeuresSup1')}</p>`;
       };
+      const baseCourante = () => { const im = num(el, 'im'), q = num(el, 'q') || 100; const imEff = Math.max(im, im >= 300 ? R.indiceMinimum : 0); const plein = imEff * R.valeurPointMensuel; return { brut: plein * partPayee(q), plein, q: q / 100, im }; };
+      let majPrimes = () => {};
+      majPrimes = brancherPrimes(el, baseCourante, (t, b) => {
+        const z = el.querySelector('#res-total'); if (!z) return;
+        const diff = R.smicMensuel ? Math.max(0, R.smicMensuel * b.q - b.brut) : 0;
+        z.innerHTML = b.im >= 300 && t.total ? ligne('Traitement brut', eur(b.brut + diff)) + ligne('Primes', eur(t.total)) + ligne('Total brut mensuel estimé', eur(b.brut + diff + t.total), true) + ligne('Net approximatif', '≈ ' + eur((b.brut + diff + t.total) * 0.79, 0)) + note('Estimation grossière, hors nuits, dimanches et heures supplémentaires. Les cotisations varient selon les primes.') : '';
+      });
       const garder = () => { const im = num(el, 'im'); S.etat.profil = { ...profil(), indiceMajore: im >= 300 ? im : undefined, quotite: num(el, 'q') || 100 }; sauver(); };
-      el.querySelector('#im').oninput = maj; el.querySelector('#q').onchange = () => { maj(); garder(); };
+      el.querySelector('#im').oninput = () => { maj(); majPrimes(); }; el.querySelector('#q').onchange = () => { maj(); majPrimes(); garder(); };
       el.querySelector('#im').onchange = garder;
       const gr = el.querySelector('#grade'), ec = el.querySelector('#ech');
       if (gr) {
         gr.onchange = () => { const g = S.cfg.grilles[Number(gr.value)]; ec.disabled = !g; ec.innerHTML = g ? '<option value="">Choisir…</option>' + g.echelons.map((x, i) => `<option value="${x.indice}">Échelon ${i + 1} · indice ${x.indice}${x.duree ? ' · ' + esc(x.duree) : ''}</option>`).join('') : '<option value="">—</option>'; };
-        ec.onchange = () => { if (ec.value) { el.querySelector('#im').value = ec.value; maj(); garder(); } };
+        ec.onchange = () => { if (ec.value) { el.querySelector('#im').value = ec.value; maj(); majPrimes(); garder(); } };
       }
-      maj();
+      maj(); majPrimes();
     }
   };
 }
@@ -119,7 +129,7 @@ const CALCS = {
   maladie: {
     titre: 'Arrêt maladie',
     intro: 'En congé de maladie ordinaire, le premier jour n\'est pas payé (jour de carence). Ensuite, le traitement est versé à 90 % pendant les trois premiers mois, puis à moitié.',
-    champs: () => `${champBrut()}${champNombre('primes', 'Primes mensuelles (€, facultatif)', '', 'step="0.01" placeholder="0"')}${champNombre('jours', 'Durée de l\'arrêt (jours, week-ends compris)', 5, 'step="1"')}
+    champs: () => `${champBrut()}${champNombre('primes', 'Primes mensuelles (€, facultatif)', primesAuto(), 'step="0.01" placeholder="0"')}${champNombre('jours', 'Durée de l\'arrêt (jours, week-ends compris)', 5, 'step="1"')}
       <label class="case-a-cocher"><span><b>Pas de jour de carence</b><small>Prolongation, accident de travail, affection de longue durée, grossesse…</small></span><input type="checkbox" id="sans"></label>`,
     calcul(el, R) {
       const brut = num(el, 'brut'), primes = num(el, 'primes'), jours = Math.max(0, Math.round(num(el, 'jours'))), sans = el.querySelector('#sans').checked;
@@ -136,7 +146,7 @@ const CALCS = {
   greve: {
     titre: 'Retenue pour grève',
     intro: 'À l\'hôpital, la retenue est proportionnelle à la durée de la grève : un trentième du mois pour une journée, moins pour une demi-journée ou quelques heures.',
-    champs: () => `${champBrut()}${champNombre('primes', 'Primes mensuelles (€, facultatif)', '', 'step="0.01" placeholder="0"')}
+    champs: () => `${champBrut()}${champNombre('primes', 'Primes mensuelles (€, facultatif)', primesAuto(), 'step="0.01" placeholder="0"')}
       <label class="champ"><span>Durée de la grève</span><select id="duree"><option value="h1">1 heure</option><option value="h2">2 heures</option><option value="demi">Une demi-journée</option><option value="jour" selected>Une journée</option></select></label>${champNombre('fois', 'Nombre de fois', 1, 'step="1" min="1"')}`,
     calcul(el) {
       const base = num(el, 'brut') + num(el, 'primes'); if (!base) return note('Renseigne ton traitement.');
