@@ -206,6 +206,7 @@ content:
             - { value: prune, label: Prune }
             - { value: olive, label: Olive }
             - { value: indigo, label: Indigo (nuit) }
+      - { name: compteCA, label: Décompter des congés annuels (CA), type: boolean, description: "Coché : chaque jour avec ce code est retiré du solde de CA (et compte pour les jours hors saison et le fractionnement)" }
       - name: compte
         label: Compteur particulier
         type: select

@@ -41,7 +41,20 @@
   {
     "code": "CA",
     "libelle": "Congé annuel",
-    "type": "conge"
+    "type": "conge",
+    "compteCA": true
+  },
+  {
+    "code": "CAF",
+    "libelle": "Congé annuel fractionné",
+    "type": "conge",
+    "compteCA": true
+  },
+  {
+    "code": "CH",
+    "libelle": "Congé d'hiver",
+    "type": "conge",
+    "compteCA": true
   },
   {
     "code": "CF-1",
