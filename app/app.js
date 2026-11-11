@@ -7,6 +7,10 @@ import { barreHaut, panneauAffichage, brancherAffichage } from './entete.js';
 import * as V from './vues2.js';
 import * as Visite from './visite.js';
 import * as T from './transfert.js';
+import { vuePlanning, grilleMois, moisVoisin, moisDepuis } from './planning.js';
+import { vueCompteurs, vueCet } from './compteurs.js';
+import * as O from './outils.js';
+import * as K from './courriers.js';
 
 const racine = document.getElementById('appli');
 
@@ -36,7 +40,8 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => S.et
 // ---------- Navigation ----------
 const ROUTES = {
   planning: vuePlanning, remplir: vueRemplir, jour: vueJour, compteurs: vueCompteurs, preuves: vuePreuves, preuve: vuePreuve,
-  syndicat: V.vueSyndicat, actu: V.vueActu, transfert: T.vueTransfert, recevoir: T.vueRecevoir, greve: V.vueGreve, desiderata: V.vueDesiderata, courriers: V.vueCourriers, signalement: V.vueSignalement, droits: V.vueDroits,
+  syndicat: V.vueSyndicat, actu: V.vueActu, transfert: T.vueTransfert, recevoir: T.vueRecevoir, greve: V.vueGreve, desiderata: V.vueDesiderata, courriers: K.vueCourriers, signalement: K.vueSignalement, droits: V.vueDroits,
+  outils: O.vueOutils, salaire: O.vueSalaire, calc: O.vueCalc, contact: O.vueContact, cet: vueCet,
   reglages: V.vueReglages, code: V.vueCode, report: V.vueReport, sauvegarde: V.vueSauvegarde, releve: V.vueReleve,
   bienvenue: V.vueBienvenue, confidentialite: V.vueConfidentialite
 };
@@ -48,7 +53,9 @@ function rendre(nouvelle = false) {
   const f = ROUTES[parts[0]] || vuePlanning;
   const v = f(parts) || {};
   const bandeau = S.demo ? `<div class="essai" role="status"><span>Mode essai · rien n'est enregistré</span><button type="button" id="quitter-essai">Quitter</button></div>` : '';
-  racine.className = v.nav ? '' : 'sans-nav';
+  const route0 = parts.join('/');
+  racine.className = (v.nav ? '' : 'sans-nav') + (nouvelle && route0 !== derniereRoute ? ' entree' : '');
+  if (nouvelle && route0 !== derniereRoute) { S.vue.info = null; S.vue.affichage = false; }
   racine.innerHTML = bandeau + (v.html || '') + (v.nav ? navBas(v.nav, nonLues()) + panneauAffichage() : '');
   brancherAffichage(racine);
   const q = document.getElementById('quitter-essai');
@@ -61,86 +68,13 @@ function rendre(nouvelle = false) {
   Visite.apresRendu(parts);
 }
 
-// ---------- Planning du mois ----------
-function grilleMois(y, m, options = {}) {
-  const today = M.aujourdhui(); const C = codes();
-  const premier = M.iso(y, m, 1); const nb = M.joursDansMois(y, m); const dec = M.jourSemaine(premier);
-  const semaines = Math.ceil((dec + nb) / 7);
-  const alertes = new Set(S.etat.reglages.controles ? M.controles(premier, M.iso(y, m, nb), S.etat, S.cfg).map((a) => a.date) : []);
-  let cases = '';
-  for (let i = 0; i < semaines * 7; i++) {
-    const d = M.ajouterJours(premier, i - dec);
-    const n = Number(d.slice(8));
-    if (d.slice(0, 7) !== premier.slice(0, 7)) { cases += `<span class="case hors" aria-hidden="true"><span class="n">${n}</span></span>`; continue; }
-    const j = M.journee(d, S.etat, C);
-    const cls = ['case'];
-    if (j && j.info) cls.push('t-' + (j.info.type === 'nuit' ? 'travail' : j.info.type)); else if (j) cls.push('t-travail'); else cls.push('vide');
-    if (j && j.source === 'prevu' && d > today) cls.push('prevu');
-    if (M.nomFerie(d)) cls.push('ferie');
-    if (d === today) cls.push('auj');
-    if (options.selection && options.selection.has(d)) cls.push('choisie');
-    const lib = `${M.longue(d)}${j ? ', ' + j.code + (j.source === 'prevu' && d > today ? ' prévu' : '') : ', non saisi'}${M.nomFerie(d) ? ', férié' : ''}${alertes.has(d) ? ', alerte' : ''}`;
-    const attrs = options.selection ? `role="button" tabindex="0" data-date="${d}" aria-pressed="${options.selection.has(d)}"` : `href="#/jour/${d}"`;
-    const tag = options.selection ? 'span' : 'a';
-    cases += `<${tag} class="${cls.join(' ')}" ${attrs} data-tour="jour-${d}" aria-label="${esc(lib)}"><span class="n">${n}</span><span class="c">${j ? esc(j.code) : ''}</span>${alertes.has(d) ? '<span class="pastille"></span>' : ''}</${tag}>`;
-  }
-  return `<div class="cal" data-tour="grille"><div class="cal-jours" aria-hidden="true">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<div>${x}</div>`).join('')}</div><div class="cal-grille">${cases}</div></div>`;
-}
-
-function moisDepuis(p) {
-  const t = M.aujourdhui();
-  const s = /^\d{4}-\d{2}$/.test(p || '') ? p : t.slice(0, 7);
-  return s.split('-').map(Number);
-}
-const moisVoisin = (y, m, k) => { const d = new Date(Date.UTC(y, m - 1 + k, 1)); return `${d.getUTCFullYear()}-${M.pad(d.getUTCMonth() + 1)}`; };
-
-function vuePlanning(p) {
-  const [y, m] = moisDepuis(p[1]);
-  const today = M.aujourdhui(); const C = codes();
-  const debut = M.iso(y, m, 1), fin = M.iso(y, m, M.joursDansMois(y, m));
-  const borne = fin < today ? fin : today;
-  const premiere = Object.keys(S.etat.jours).sort()[0];
-  const departMois = premiere && premiere > debut ? premiere : debut;
-  const bilan = premiere && departMois <= borne ? M.bilanPeriode(departMois, borne, S.etat, S.cfg) : null;
-  let saisis = 0; for (let n = M.jourNum(debut); n <= M.jourNum(fin); n++) if (S.etat.jours[M.depuisNum(n)]) saisis++;
-  const nbAlertes = S.etat.reglages.controles ? M.controles(debut, fin, S.etat, S.cfg).length : 0;
-  const js = joursDepuisSauvegarde();
-  const sauvOk = js !== null && js < 31;
-  const jAuj = today.slice(0, 7) === debut.slice(0, 7) ? M.journee(today, S.etat, C) : null;
-  let carteJour = '';
-  if (today.slice(0, 7) === debut.slice(0, 7)) {
-    const f = M.nomFerie(today);
-    const horaire = jAuj && jAuj.info && jAuj.info.debut ? `${jAuj.info.debut} – ${jAuj.info.fin}` : (jAuj && jAuj.info ? esc(jAuj.info.libelle) : 'Rien de saisi pour aujourd\'hui');
-    carteJour = `<section class="carte" aria-label="Aujourd'hui" style="margin:0 1rem;display:flex;flex-direction:column;gap:.5rem">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><p class="etiquette">${esc(M.JOURS[M.jourSemaine(today)].slice(0, 3))}. ${esc(M.courte(today))}${f ? ' · ' + esc(f) : ''}</p><a href="#/jour/${today}" style="font-size:.8125rem;font-weight:700;text-decoration:none;padding:.375rem 0">${jAuj ? 'Modifier' : 'Saisir'}</a></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem"><div style="display:flex;align-items:center;gap:.75rem;min-width:0">${jAuj ? `<span style="font-size:1.375rem;font-weight:800;font-stretch:80%">${esc(jAuj.code)}</span>` : ''}<span style="font-size:.9375rem;color:var(--encre2)">${horaire}</span></div>${jAuj && jAuj.effMin ? `<b>${M.formatDuree(jAuj.effMin)}</b>` : ''}</div>
-      ${jAuj && f && jAuj.effMin ? '<p class="petit" style="margin:0">Compte dans tes dimanches et fériés.</p>' : ''}
-    </section>`;
-  }
-  return {
-    nav: 'planning',
-    html: `${barreHaut()}
-      <div class="ligne-titre"><h1>${esc(M.MOIS[m - 1].replace(/^./, (c) => c.toUpperCase()))} <span class="pale">${y}</span></h1>
-        <div class="fleches"><a href="#/planning/${moisVoisin(y, m, -1)}" aria-label="Mois précédent">${ic('gauche')}</a><a href="#/planning/${moisVoisin(y, m, 1)}" aria-label="Mois suivant">${ic('droite')}</a></div></div>
-      <div class="bandeau-stats" style="margin-top:.875rem">
-        <div><span>Solde du mois</span><b class="${bilan && bilan.solde < 0 ? 'neg' : 'pos'}">${bilan ? M.formatDuree(bilan.solde, true) : '—'}</b></div>
-        <div><span>Saisis</span><b>${saisis}<span class="pale" style="font-size:1.125rem;font-weight:500;color:var(--pale)"> / ${M.joursDansMois(y, m)} j</span></b></div>
-        <div><a href="#/compteurs/${y}" style="text-decoration:none;color:inherit;display:block"><span>Alertes</span><b class="${nbAlertes ? 'neg' : ''}">${nbAlertes}</b></a></div>
-      </div>
-      ${grilleMois(y, m)}
-      <div style="padding:0 1rem;margin-top:-.25rem"><div class="legende"><span><i class="plein"></i>Fait</span><span><i class="tirets"></i>Prévu</span><span><u>11</u>Férié</span><span><i style="width:6px;height:6px;border-radius:50%;background:var(--rouge);border:0"></i>Alerte</span></div></div>
-      ${carteJour}
-      <div style="padding:0 1rem"><a class="btn plein" href="#/remplir/${y}-${M.pad(m)}" data-tour="remplir">${ic('calendrier')}Remplir plusieurs jours d'un coup</a></div>`
-  };
-}
-
 // ---------- Remplir plusieurs jours ----------
 function vueRemplir(p) {
   const [y, m] = moisDepuis(p[1]);
   const cle = `${y}-${M.pad(m)}`;
   if (!S.vue.remplir || S.vue.remplir.mois !== cle) S.vue.remplir = { mois: cle, code: null, sel: new Set() };
   const R = S.vue.remplir; const C = [...codes().values()];
-  const puces = C.map((c) => `<button type="button" class="${c.debut ? 'code' : 'puce t-' + c.type}" data-code="${esc(c.code)}" aria-pressed="${R.code === c.code}">${c.debut ? `<b>${esc(c.code)}</b><span>${esc(c.debut)}–${esc(c.fin)}</span>` : esc(c.code)}</button>`);
+  const puces = C.map((c) => `<button type="button" class="${c.debut ? 'code k k-' + c.teinte : 'puce t-' + c.type}" data-code="${esc(c.code)}" aria-pressed="${R.code === c.code}">${c.debut ? `<b>${esc(c.code)}</b><span>${esc(c.debut)}–${esc(c.fin)}</span>` : esc(c.code)}</button>`);
   const travail = C.filter((c) => c.debut).length;
   return {
     html: `${enteteRetour('Remplir', `#/planning/${cle}`)}
@@ -196,7 +130,7 @@ function vueJour(p) {
           <button type="button" data-mode="prevu" aria-pressed="${J.mode === 'prevu'}">Ce qui était prévu</button></div>
         ${J.mode === 'realise' && prevuCode ? `<p class="petit" style="margin:-.25rem 0 0">Prévu : <b>${esc(prevuCode)}</b>. Ne change rien si la journée s'est passée comme prévu.</p>` : ''}
         <div style="display:flex;flex-direction:column;gap:.5rem" data-tour="codes"><p class="etiquette">Horaire</p>
-          <div class="codes-travail">${travail.map((c) => `<button type="button" class="code" data-code="${esc(c.code)}" aria-pressed="${J.code === c.code}"><b>${esc(c.code)}</b><span>${esc(c.debut)}–${esc(c.fin)}</span></button>`).join('')}</div>
+          <div class="codes-travail">${travail.map((c) => `<button type="button" class="code k k-${c.teinte}" data-code="${esc(c.code)}" aria-pressed="${J.code === c.code}"><b>${esc(c.code)}</b><span>${esc(c.debut)}–${esc(c.fin)}</span></button>`).join('')}</div>
           <div class="codes-autres">${autres.map((c) => `<button type="button" class="puce t-${esc(c.type)}" data-code="${esc(c.code)}" aria-pressed="${J.code === c.code}" title="${esc(c.libelle)}">${esc(c.code)}</button>`).join('')}</div>
           ${info ? `<p class="petit" style="margin:0">${esc(info.libelle)}${info.debut ? ` · ${M.formatDuree(M.dureeEffectiveCode(info))} comptées${info.pauseMin ? ` (pause de ${info.pauseMin} min déduite)` : ''}${badgeProvisoire(S.cfg, 'codes.pause')}` : ''}</p>` : ''}
         </div>
@@ -256,57 +190,6 @@ function majPreuve(type, date, donnees) {
   const ancien = i >= 0 ? S.etat.preuves[i] : { id: `${type}-${date}`, type, date, compense: false, creeLe: new Date().toISOString() };
   const n = { ...ancien, ...donnees };
   if (i >= 0) S.etat.preuves[i] = n; else S.etat.preuves.push(n);
-}
-
-// ---------- Compteurs ----------
-function vueCompteurs(p) {
-  const y = /^\d{4}$/.test(p[1] || '') ? Number(p[1]) : Number(M.aujourdhui().slice(0, 4));
-  const b = M.bilanAnnee(y, S.etat, S.cfg);
-  const today = M.aujourdhui();
-  const enCours = String(y) === today.slice(0, 4);
-  const finCtrl = enCours ? M.ajouterJours(today, 60) : `${y}-12-31`;
-  const alertes = S.etat.reglages.controles ? M.controles(`${y}-01-01`, finCtrl < `${y}-12-31` ? finCtrl : `${y}-12-31`, S.etat, S.cfg) : [];
-  const soldes = b.mois.map((x) => (x ? x.solde : 0));
-  const max = Math.max(60, ...soldes.map(Math.abs));
-  const barres = soldes.map((s) => `<div><div class="h">${s > 0 ? `<i style="height:${Math.round(s / max * 100)}%"></i>` : ''}</div><div class="axe"></div><div class="b">${s < 0 ? `<i style="height:${Math.round(-s / max * 100)}%"></i>` : ''}</div></div>`).join('');
-  const rttReste = b.rttDroit - b.rttPris, caDroit = b.caDroit + b.bonusHS + b.bonusFrac, caReste = caDroit - b.caPris;
-  const pct = (a, t) => Math.max(0, Math.min(100, t ? Math.round(a / t * 100) : 0));
-  const tuile = (l, v, u, sous, j, couleur) => `<div class="tuile"><div class="l">${l}</div><div class="v">${v}<small>${u}</small></div><div class="jauge"><i style="width:${j}%;background:${couleur}"></i></div><div class="petit" style="margin-top:.375rem">${sous}</div></div>`;
-  const regles = ['Repos quotidien', 'Repos hebdomadaire', '48 heures sur 7 jours', 'Repos de la quinzaine', 'Amplitude de la journée'];
-  const vues = new Set(alertes.map((a) => a.regle));
-  const listeAlertes = alertes.slice().reverse().slice(0, S.vue.toutesAlertes ? 999 : 4).map((a) => `<li class="alerte grave">${ic('alerte')}<div><div class="t">${esc(a.regle)}${a.futur ? ' · à venir' : ''}</div><div class="m">${esc(a.message)} <a href="#/jour/${a.date}">Voir le jour</a></div></div></li>`).join('');
-  return {
-    nav: 'compteurs',
-    html: `${barreHaut()}<div class="ligne-titre"><h1>Compteurs <span class="pale">${y}</span></h1>
-        <div class="fleches"><a href="#/compteurs/${y - 1}" aria-label="Année précédente">${ic('gauche')}</a><a href="#/compteurs/${y + 1}" aria-label="Année suivante">${ic('droite')}</a></div></div>
-      <div class="page" style="margin-top:1rem">
-        <section class="carte sombre" data-tour="solde" aria-label="Solde de l'année">
-          <p class="etiquette">Solde au ${M.courte(b.jusqua)}${b.depart && b.depart > `${y}-01-01` ? ` · suivi depuis le ${M.courte(b.depart)}` : ''}</p>
-          <div style="display:flex;align-items:baseline;gap:.625rem;margin-top:.25rem;flex-wrap:wrap"><span style="font-size:2.75rem;line-height:1;font-weight:800;font-stretch:80%">${M.formatDuree(b.solde, true)}</span><span style="font-size:.875rem;color:var(--carte-sombre-texte)">${b.solde >= 0 ? 'au-dessus de ton dû' : 'en dessous de ton dû'}</span></div>
-          <p class="petit" style="margin:.375rem 0 0">Fait ${M.formatDuree(b.realise)} − dû ${M.formatDuree(b.theorique)}${b.report ? ` · ${b.reportAuto ? `report ${y - 1}` : 'solde de départ'} ${M.formatDuree(b.report, true)}` : ''}${badgeProvisoire(S.cfg, 'regles.valeurJourneeHeures')}</p>
-          <div class="barres" role="img" aria-label="Solde de chaque mois">${barres}</div>
-          <div class="barres-l" aria-hidden="true">${'JFMAMJJASOND'.split('').map((l) => `<span>${l}</span>`).join('')}</div>
-        </section>
-        ${b.manquants.length ? `<a class="carte ambre" href="#/jour/${b.manquants[0]}" style="text-decoration:none;display:flex;gap:.625rem">${ic('horloge')}<span><b style="display:block;font-size:.875rem">${b.manquants.length} jour${b.manquants.length > 1 ? 's' : ''} de semaine sans saisie</b><span class="petit">Le solde est faussé tant qu'ils restent vides. Premier : ${M.courte(b.manquants[0])}.</span></span></a>` : ''}
-        <div class="tuiles">
-          ${tuile(`RTT restants${badgeProvisoire(S.cfg, 'regles.rttParAn')}`, rttReste, ` / ${b.rttDroit}`, `${b.rttPris} posé${b.rttPris > 1 ? 's' : ''} dans l'année`, pct(rttReste, b.rttDroit), 'var(--bleu)')}
-          ${tuile('Congés restants', caReste, ` / ${caDroit}`, b.bonusHS || b.bonusFrac ? `dont ${b.bonusHS + b.bonusFrac} jour${b.bonusHS + b.bonusFrac > 1 ? 's' : ''} gagné${b.bonusHS + b.bonusFrac > 1 ? 's' : ''} (hors saison / fractionnement)` : `${b.caHorsSaison} posé${b.caHorsSaison > 1 ? 's' : ''} hors saison`, pct(caReste, caDroit), 'var(--vert)')}
-          ${tuile('Dépassements', M.formatDuree(b.depassements), '', `${b.recupPris} jour${b.recupPris > 1 ? 's' : ''} de récup posé${b.recupPris > 1 ? 's' : ''}`, pct(b.depassements, 60 * 60), 'var(--encre)')}
-          ${tuile('Dimanches & fériés', b.djfJours, ' j', `${M.formatDuree(b.djfMinutes)} travaillées`, pct(b.djfJours, 20), 'var(--encre)')}
-        </div>
-        <div class="carte" style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.9375rem">Heures de nuit (21h–6h)</span><b>${M.formatDuree(b.nuit)}</b></div>
-        <section class="liste" data-tour="alertes" aria-label="Contrôles légaux" style="list-style:none">
-          <div style="padding:.75rem .875rem .5rem;display:flex;justify-content:space-between;align-items:baseline"><h2>Contrôles légaux</h2><a class="petit" href="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000398298" target="_blank" rel="noopener">Décret 2002-9</a></div>
-          ${S.etat.reglages.controles ? `<ul style="list-style:none;margin:0;padding:0">${listeAlertes}
-          ${alertes.length > 4 && !S.vue.toutesAlertes ? `<li><button class="lien" id="toutes" style="display:flex;padding:.75rem .875rem;width:100%;background:none;border:0;border-top:1px solid var(--filet2);font-weight:700;color:var(--rouge-texte);cursor:pointer">Voir les ${alertes.length} alertes</button></li>` : ''}
-          ${regles.filter((r) => !vues.has(r)).map((r) => `<li style="display:flex;justify-content:space-between;align-items:center;padding:.625rem .875rem;border-top:1px solid var(--filet2);font-size:.875rem"><span>${r}</span><span class="ok">${ic('coche')}Respecté</span></li>`).join('')}</ul>
-          <p class="petit" style="padding:.5rem .875rem .75rem;margin:0;border-top:1px solid var(--filet2)">Vérifié sur tes saisies. Une alerte répétée ? Parles-en à la CGT.</p>`
-          : '<p class="petit" style="padding:0 .875rem .875rem;margin:0">Contrôles désactivés dans les réglages.</p>'}
-        </section>
-        <div class="rangee"><a class="btn" href="#/releve/${y}">${ic('imprimer')}Relevé annuel</a><a class="btn" href="#/report/${y}">Point de départ</a></div>
-      </div>`,
-    apres(el) { const t = el.querySelector('#toutes'); if (t) t.onclick = () => { S.vue.toutesAlertes = true; S.rendre(); }; }
-  };
 }
 
 // ---------- Mes preuves ----------

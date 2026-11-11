@@ -38,15 +38,17 @@ export function vueSyndicat() {
         <ul class="liste">
           ${lien('#/greve', 'Déclarer mon intention de grève', 'Le mail à ton cadre, prêt à partir')}
           ${lien('#/desiderata', 'Désiderata de congés', 'Tes dates, mises en forme pour ton cadre')}
-          ${lien('#/courriers', 'Préparer un courrier', 'Récupération, rappel sur repos, changement de planning')}
+          ${lien('#/courriers', 'Préparer un courrier', '14 modèles : heures, planning, temps partiel, alerte…')}
           ${lien('#/droits', 'Mes droits', 'Temps de travail et repos, en clair')}
         </ul>
         <p class="etiquette">Confidentiel</p>
         <ul class="liste">
           ${lien('#/signalement/violence', 'Signaler une violence', 'De la hiérarchie, de collègues, de patients')}
           ${lien('#/signalement/discrimination', 'Signaler une discrimination', 'Et demander un rendez-vous')}
+          ${lien('#/signalement/exposition', 'Signaler une exposition', 'Amiante, produits chimiques, agents biologiques')}
         </ul>
         <p class="petit" style="margin:-.375rem 0 0">Ces messages partent de ta propre messagerie, directement aux délégué·es. L'appli ne garde rien.</p>
+        <a class="btn sombre plein" href="#/contact">${ic('telephone')}Contacter le syndicat</a>
         ${contacts ? `<p class="etiquette">Nous trouver</p><ul class="liste">${contacts}</ul>` : '<div class="carte"><p class="petit" style="margin:0">Les coordonnées du syndicat seront ajoutées très bientôt.</p></div>'}
         ${reseaux ? `<p class="etiquette">Nous suivre</p><div class="reseaux">${reseaux}</div>` : ''}
         ${pasDeMail('mailAdhesion') ? '' : `<a class="btn principal plein" href="${esc(lienMail('mailAdhesion', `Adhésion — ${S.cfg.syndicat}`, `Bonjour,\n\nJe souhaite adhérer à la CGT. Pouvez-vous me recontacter ?\n\n${signature()}\n`))}">Adhérer à la CGT</a>`}
@@ -140,64 +142,6 @@ export function vueDesiderata() {
   };
 }
 
-// ---------- Courriers ----------
-const MODELES = {
-  recup: { titre: 'Demande de récupération', corps: (a, x) => `Bonjour,\n\nMon décompte fait apparaître ${x.heures || '[nombre d\'heures]'} effectuées au-delà de mon temps de travail prévu. Je souhaite les récupérer ${x.dates ? 'le ' + x.dates : 'à une date à convenir ensemble'}.\n\nJe reste disponible pour en parler.\n\nCordialement,\n${a}` },
-  rappel: { titre: 'Rappel sur un repos', corps: (a, x) => `Bonjour,\n\nLe ${x.dates || '[date]'}, j'ai été rappelé·e pour travailler alors que j'étais en repos. Je vous remercie de m'indiquer les modalités de compensation de cette journée (récupération ou rémunération).\n\nCordialement,\n${a}` },
-  changement: { titre: 'Changement de planning', corps: (a, x) => `Bonjour,\n\nMon planning du ${x.dates || '[date]'} a été modifié et je n'en ai été informé·e que ${x.delai || '[délai]'} avant. Je souhaite que les changements de planning me soient communiqués dans un délai raisonnable, afin de pouvoir organiser ma vie personnelle, et qu'une solution soit trouvée pour cette fois.\n\nCordialement,\n${a}` }
-};
-export function vueCourriers() {
-  S.vue.courrier = S.vue.courrier || { modele: 'recup', dates: '', heures: '', delai: '', texte: null };
-  const K = S.vue.courrier; const m = MODELES[K.modele];
-  const texte = K.texte != null ? K.texte : m.corps(signature() || '[ton nom]', K);
-  return {
-    html: `${enteteRetour('Courriers', '#/syndicat')}
-      <div class="page" style="margin-top:.75rem">
-        <div class="segment" role="group" aria-label="Modèle">${Object.entries(MODELES).map(([k, v]) => `<button type="button" data-m="${k}" aria-pressed="${K.modele === k}" style="font-size:.75rem">${v.titre}</button>`).join('')}</div>
-        <label class="champ"><span>Date(s) concernée(s)</span><input id="dates" value="${esc(K.dates)}" placeholder="Ex. : 12 novembre"></label>
-        ${K.modele === 'recup' ? `<label class="champ"><span>Heures à récupérer</span><input id="heures" value="${esc(K.heures)}" placeholder="Ex. : 7h30"></label>` : ''}
-        ${K.modele === 'changement' ? `<label class="champ"><span>Prévenu·e combien de temps avant ?</span><input id="delai" value="${esc(K.delai)}" placeholder="Ex. : la veille au soir"></label>` : ''}
-        <label class="champ"><span>Courrier (modifiable)</span><textarea id="texte" style="min-height:14rem">${esc(texte)}</textarea></label>
-        <div class="rangee"><button class="btn" id="copier">Copier</button><a class="btn principal" id="mail" href="#">${ic('mail')}Par mail</a></div>
-      </div>`,
-    apres(el) {
-      el.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => { K.modele = b.dataset.m; K.texte = null; S.rendre(); });
-      ['dates', 'heures', 'delai'].forEach((k) => { const i = el.querySelector('#' + k); if (i) i.onchange = () => { K[k] = i.value; K.texte = null; S.rendre(); }; });
-      const t = el.querySelector('#texte'); t.oninput = () => { K.texte = t.value; };
-      el.querySelector('#copier').onclick = async () => { try { await navigator.clipboard.writeText(t.value); toast('Courrier copié'); } catch (e) { t.select(); toast('Sélectionné : copie-le avec ton clavier'); } };
-      el.querySelector('#mail').onclick = () => { el.querySelector('#mail').href = mailto('', m.titre, t.value); };
-    }
-  };
-}
-
-// ---------- Signalement ----------
-export function vueSignalement(p) {
-  const disc = p[1] === 'discrimination';
-  const types = disc ? ['Origine', 'Sexe ou genre', 'Âge', 'Handicap ou santé', 'Grossesse', 'Activité syndicale', 'Convictions', 'Orientation sexuelle', 'Autre'] : ['De la hiérarchie', 'De collègue(s)', 'De patient(s) ou de proches', 'Autre'];
-  const indispo = pasDeMail('mailSignalement');
-  return {
-    html: `${enteteRetour(disc ? 'Discrimination' : 'Violence', '#/syndicat')}
-      <div class="page" style="margin-top:.75rem">
-        <p class="texte">Tu n'as pas à rester seul·e. Ce message part de ta messagerie vers les délégué·es, qui te proposeront un rendez-vous en toute confidentialité.</p>
-        <fieldset class="liste" style="padding:.25rem 0;margin:0"><legend class="etiquette" style="padding:0 .875rem">${disc ? 'Motif' : 'Violence'}</legend>
-          ${types.map((t, i) => `<label class="ligne" style="cursor:pointer"><span>${t}</span><input type="checkbox" value="${esc(t)}" data-t style="width:1.375rem;height:1.375rem;accent-color:var(--rouge)"></label>`).join('')}</fieldset>
-        <label class="champ"><span>Ce qui s'est passé, en quelques mots</span><textarea id="faits" placeholder="Dates, lieu, témoins éventuels. N'indique aucune information sur l'identité ou la santé d'un patient."></textarea></label>
-        <label class="champ"><span>Comment te joindre ?</span><input id="joindre" placeholder="Téléphone ou créneaux (facultatif)"></label>
-        ${champsAgent()}
-        <a class="btn principal plein" id="envoyer" href="#" ${indispo ? 'aria-disabled="true" style="opacity:.5"' : ''}>${ic('mail')}Préparer le message</a>
-        ${indispo ? '<p class="petit" style="margin:0">L\'adresse des délégué·es n\'est pas encore renseignée dans l\'appli.</p>' : ''}
-      </div>`,
-    apres(el) {
-      el.querySelector('#envoyer').onclick = (e) => {
-        if (indispo) { e.preventDefault(); return; }
-        const a = lireAgent(el); const choix = [...el.querySelectorAll('[data-t]:checked')].map((i) => i.value);
-        const corps = `Bonjour,\n\nJe souhaite signaler ${disc ? 'une discrimination' : 'une situation de violence'} et rencontrer un·e délégué·e.\n\n${disc ? 'Motif(s)' : 'Type'} : ${choix.join(', ') || 'non précisé'}\n\nFaits :\n${el.querySelector('#faits').value.trim() || '(à préciser de vive voix)'}\n\nMe joindre : ${el.querySelector('#joindre').value.trim() || 'par retour de mail'}\n\n${[a.nom, a.metier, a.service].filter(Boolean).join('\n')}\n`;
-        el.querySelector('#envoyer').href = mailto(S.cfg.contacts.mailSignalement, `Signalement confidentiel — demande de rendez-vous`, corps);
-      };
-    }
-  };
-}
-
 // ---------- Mes droits ----------
 const FICHES = [
   { titre: 'Repos entre deux journées', texte: 'Au moins 12 heures de repos consécutives entre deux journées de travail. Ce minimum peut être abaissé à 11 heures seulement par décision du chef d\'établissement, après un accord collectif.', lien: 'https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000398298', source: 'Décret 2002-9, art. 6' },
@@ -237,7 +181,7 @@ export function vueReglages() {
           <label class="champ"><span>Service</span><input id="service" value="${esc(p.service || '')}" placeholder="facultatif"></label>
         </div>
         <p class="etiquette">Mes codes horaires</p>
-        <ul class="liste">${C.filter((c) => c.debut).map((c) => `<li><a class="lien" href="#/code/${encodeURIComponent(c.code)}"><span style="display:flex;gap:.75rem;align-items:baseline"><b style="font-stretch:82%;min-width:3rem">${esc(c.code)}</b><span style="color:var(--encre2)">${esc(c.debut)} – ${esc(c.fin)}${c.debut2 ? ` + ${esc(c.debut2)} – ${esc(c.fin2)}` : ''}</span></span><span class="val">${M.formatDuree(M.dureeEffectiveCode(c))}${perso.includes(c.code) ? ' · perso' : ''}${chevron()}</span></a></li>`).join('')}
+        <ul class="liste">${C.filter((c) => c.debut).map((c) => `<li><a class="lien" href="#/code/${encodeURIComponent(c.code)}"><span style="display:flex;gap:.75rem;align-items:baseline"><i class="pt k-${c.teinte}" style="width:.75rem;height:.75rem;align-self:center"></i><b style="font-stretch:82%;min-width:3rem">${esc(c.code)}</b><span style="color:var(--encre2)">${esc(c.debut)} – ${esc(c.fin)}${c.debut2 ? ` + ${esc(c.debut2)} – ${esc(c.fin2)}` : ''}</span></span><span class="val">${M.formatDuree(M.dureeEffectiveCode(c))}${perso.includes(c.code) ? ' · perso' : ''}${chevron()}</span></a></li>`).join('')}
           <li><a class="lien" href="#/code/nouveau" style="color:var(--rouge-texte);font-weight:700">${ic('plus')}<span style="flex:1">Ajouter un code</span></a></li></ul>
         <p class="petit" style="margin:-.375rem 0 0">Les codes de l'établissement sont mis à jour par le syndicat. Tu peux ajouter les tiens ou ajuster un horaire.</p>
         <p class="etiquette">Affichage</p>
@@ -280,13 +224,14 @@ export function vueCode(p) {
   const c = exist || { code: '', libelle: '', type: 'travail', debut: '08:00', fin: '16:00', pauseMin: 30 };
   const estPerso = exist && S.etat.codesPerso.some((x) => x.code === exist.code);
   const officiel = exist && S.cfg.codes.some((x) => x.code === exist.code);
-  const types = [['travail', 'Travail de jour'], ['nuit', 'Travail de nuit'], ['repos', 'Repos'], ['rtt', 'RTT'], ['conge', 'Congé'], ['recup', 'Récupération'], ['assimile', 'Absence comptée (maladie, formation…)']];
+  const types = [['travail', 'Travail de jour'], ['nuit', 'Travail de nuit'], ['repos', 'Repos'], ['rtt', 'RTT'], ['conge', 'Congé'], ['cet', 'Jour de CET'], ['recup', 'Récupération'], ['assimile', 'Absence comptée (maladie, formation…)']];
   return {
     html: `${enteteRetour(nouveau ? 'Nouveau code' : c.code, '#/reglages')}
       <div class="page" style="margin-top:.75rem">
         ${officiel ? `<p class="petit" style="margin:0">Code de l'établissement${badgeProvisoire(S.cfg, 'codes.pause')}. Si tu le modifies, ta version remplace celle du syndicat sur ton téléphone uniquement.</p>` : ''}
         <div class="rangee"><label class="champ" style="flex:1"><span>Code</span><input id="code" value="${esc(c.code)}" maxlength="6" ${nouveau ? '' : 'readonly'} style="text-transform:uppercase"></label>
           <label class="champ" style="flex:2"><span>Libellé</span><input id="libelle" value="${esc(c.libelle || '')}"></label></div>
+        <div id="bloc-couleur"><p class="etiquette" style="margin-bottom:.375rem">Couleur dans le planning</p><div class="nuancier" role="group" aria-label="Couleur">${['', ...M.PALETTE, 'indigo'].map((t) => `<button type="button" data-teinte="${t}" class="${t ? 'k k-' + t : 'auto'}" aria-pressed="${(c.couleur || '') === t}" aria-label="${t || 'Automatique'}">${t ? '' : 'Auto'}</button>`).join('')}</div></div>
         <label class="champ"><span>Type</span><select id="type">${types.map(([v, l]) => `<option value="${v}" ${c.type === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         <div id="horaires" style="display:flex;flex-direction:column;gap:.75rem">
           <div class="rangee"><label class="champ"><span>Début</span><input type="time" id="debut" value="${esc(c.debut || '')}"></label><label class="champ"><span>Fin</span><input type="time" id="fin" value="${esc(c.fin || '')}"></label></div>
@@ -298,14 +243,18 @@ export function vueCode(p) {
         ${estPerso ? `<button class="btn plein danger" id="suppr">${officiel ? 'Revenir à la version du syndicat' : 'Supprimer ce code'}</button>` : ''}
       </div>`,
     apres(el) {
-      const majVis = () => { const t = el.querySelector('#type').value; el.querySelector('#horaires').hidden = !(t === 'travail' || t === 'nuit'); el.querySelector('#seg2').hidden = !el.querySelector('#coupe').checked; };
+      let couleur = c.couleur || '';
+      el.querySelectorAll('[data-teinte]').forEach((b) => b.onclick = () => { couleur = b.dataset.teinte; el.querySelectorAll('[data-teinte]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); });
+      const majVis = () => { const t = el.querySelector('#type').value; el.querySelector('#horaires').hidden = !(t === 'travail' || t === 'nuit'); el.querySelector('#bloc-couleur').hidden = !(t === 'travail' || t === 'nuit'); el.querySelector('#seg2').hidden = !el.querySelector('#coupe').checked; };
       el.querySelector('#type').onchange = majVis; el.querySelector('#coupe').onchange = majVis; majVis();
       el.querySelector('#ok').onclick = () => {
         const code = el.querySelector('#code').value.trim().toUpperCase();
         if (!code) { toast('Indique un code'); return; }
         if (nouveau && codes().has(code)) { toast('Ce code existe déjà'); return; }
         const t = el.querySelector('#type').value; const o = { code, libelle: el.querySelector('#libelle').value.trim() || code, type: t };
+        if (c.compte) o.compte = c.compte;
         if (t === 'travail' || t === 'nuit') {
+          if (couleur) o.couleur = couleur;
           o.debut = el.querySelector('#debut').value; o.fin = el.querySelector('#fin').value; o.pauseMin = Number(el.querySelector('#pause').value) || 0;
           if (!o.debut || !o.fin) { toast('Indique les heures'); return; }
           if (el.querySelector('#coupe').checked && el.querySelector('#debut2').value && el.querySelector('#fin2').value) { o.debut2 = el.querySelector('#debut2').value; o.fin2 = el.querySelector('#fin2').value; }

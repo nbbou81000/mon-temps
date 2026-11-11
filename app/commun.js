@@ -21,6 +21,12 @@ const P = {
   partager: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
   aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.1-1.5 2.5M12 17v.01"/>',
   engrenage: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+  outils: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>',
+  euro: '<path d="M17.5 6.5A6.5 6.5 0 007 9.5v5a6.5 6.5 0 0010.5 3M4 10.5h8M4 13.5h8"/>',
+  coeur: '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0112 7.5 4.3 4.3 0 0119.5 10c0 5.4-7.5 10-7.5 10z"/>',
+  megaphone: '<path d="M4 10v4h3l6 4V6L7 10z"/><path d="M17 9a4 4 0 010 6"/>',
+  parts: '<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.5 6"/>',
+  soleil: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
   qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3M17.5 17.5v.01"/>',
   camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
   actu: '<path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2M8 9h5M8 13h5"/>',
@@ -53,7 +59,7 @@ export function mailto(a, sujet, corps, cc) {
 
 export function navBas(actif, nonLues = 0) {
   const l = (h, nom, icone, lib) => `<a href="${h}" ${actif === nom ? 'aria-current="page"' : ''} data-tour="nav-${nom}">${ic(icone)}${lib}${nom === 'syndicat' && nonLues ? `<span class="point" aria-label="${nonLues} actualité${nonLues > 1 ? 's' : ''} non lue${nonLues > 1 ? 's' : ''}"></span>` : ''}</a>`;
-  return `<nav class="bas" aria-label="Navigation principale">${l('#/planning', 'planning', 'calendrier', 'Planning')}${l('#/compteurs', 'compteurs', 'barres', 'Compteurs')}${l('#/preuves', 'preuves', 'preuves', 'Mes preuves')}${l('#/syndicat', 'syndicat', 'syndicat', 'Syndicat')}</nav>`;
+  return `<nav class="bas" aria-label="Navigation principale">${l('#/planning', 'planning', 'calendrier', 'Planning')}${l('#/compteurs', 'compteurs', 'barres', 'Compteurs')}${l('#/preuves', 'preuves', 'preuves', 'Preuves')}${l('#/outils', 'outils', 'outils', 'Outils')}${l('#/syndicat', 'syndicat', 'syndicat', 'Syndicat')}</nav>`;
 }
 
 export function enteteRetour(titre, retour = '#/planning', etiquette = 'Retour') {

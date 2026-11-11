@@ -20,11 +20,25 @@
   "nuitFin": "06:00",
   "lundiPentecoteTravaille": true,
   "delaiPrevenanceHeures": 48,
+  "valeurPointMensuel": 4.92278,
+  "heuresAnnuellesTauxHoraire": 1820,
+  "majorationNuitPct": 25,
+  "indemniteDimancheFerie8h": 60,
+  "coefHeuresSup1": 1.25,
+  "coefHeuresSup2": 1.27,
+  "seuilHeuresSup": 14,
+  "maladieTauxPct": 90,
+  "maladieJoursTauxPlein": 90,
+  "gardeEnfantJours": 6,
+  "rhParAn": 104,
   "aValider": [
     "regles.valeurJourneeHeures",
     "regles.rttParAn",
     "regles.delaiPrevenanceHeures",
     "codes.pause",
-    "contacts"
+    "contacts",
+    "regles.gardeEnfantJours",
+    "regles.rhParAn",
+    "regles.coefHeuresSup1"
   ]
 }

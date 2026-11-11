@@ -59,9 +59,20 @@
     "type": "recup"
   },
   {
+    "code": "CET",
+    "libelle": "Jour pris sur le CET",
+    "type": "cet"
+  },
+  {
     "code": "TPPO",
     "libelle": "Temps partiel",
     "type": "repos"
+  },
+  {
+    "code": "GE",
+    "libelle": "Garde d'enfant malade",
+    "type": "assimile",
+    "compte": "ge"
   },
   {
     "code": "MAL",

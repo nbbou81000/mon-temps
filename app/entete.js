@@ -7,6 +7,7 @@ export function barreHaut() {
   const ok = js !== null && js < 31;
   return `<header class="haut"><div class="marque">${marque(S.cfg)}<span>${esc(S.cfg.syndicat)}</span></div><div class="icones">
     <a class="btn-icone" href="#/sauvegarde" data-tour="sauvegarde" aria-label="${ok ? 'Sauvegarde à jour' : 'Sauvegarde à faire'}" title="Sauvegarde" style="color:${ok ? 'var(--vert)' : 'var(--ambre)'}">${ic(ok ? 'bouclier' : 'bouclierAlerte')}</a>
+    <a class="btn-icone" href="#/contact" aria-label="Contacter le syndicat" title="Contacter le syndicat">${ic('telephone')}</a>
     <button type="button" class="btn-icone aa" data-affichage aria-label="Affichage : thème et taille du texte" title="Affichage">Aa</button>
     <a class="btn-icone" href="#/reglages" data-tour="reglages" aria-label="Réglages" title="Réglages">${ic('engrenage')}</a></div></header>`;
 }

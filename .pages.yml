@@ -93,6 +93,14 @@ content:
             options: { format: yyyy-MM-dd }
           - { name: titre, label: Titre, type: string, required: true }
           - { name: lieu, label: Lieu et horaire, type: string }
+      - name: liens
+        label: Liens utiles (onglet Outils)
+        type: object
+        list: true
+        fields:
+          - { name: titre, label: Titre, type: string, required: true }
+          - { name: url, label: Adresse (https://…), type: string, required: true }
+          - { name: description, label: Description courte, type: string }
       - name: metiers
         label: Métiers proposés
         type: string
@@ -134,8 +142,29 @@ content:
             - { value: rtt, label: RTT }
             - { value: conge, label: Congé }
             - { value: recup, label: Récupération }
+            - { value: cet, label: Jour pris sur le CET }
             - { value: assimile, label: Absence comptée (maladie, formation…) }
             - { value: greve, label: Grève }
+      - name: couleur
+        label: Couleur dans le planning (horaires de travail)
+        type: select
+        options:
+          values:
+            - { value: '', label: Automatique }
+            - { value: ocre, label: Ocre }
+            - { value: sarcelle, label: Vert d'eau }
+            - { value: brique, label: Brique }
+            - { value: prune, label: Prune }
+            - { value: olive, label: Olive }
+            - { value: indigo, label: Indigo (nuit) }
+      - name: compte
+        label: Compteur particulier
+        type: select
+        options:
+          values:
+            - { value: '', label: Aucun }
+            - { value: rh, label: Repos hebdomadaire (RH) }
+            - { value: ge, label: Garde d'enfant (GE) }
       - { name: debut, label: Début (HH:MM), type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
       - { name: fin, label: Fin (HH:MM), type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
       - { name: pauseMin, label: Pause non comptée (minutes), type: number }
@@ -168,6 +197,17 @@ content:
       - { name: maxSeptJoursHeures, label: Maximum sur 7 jours (h), type: number }
       - { name: reposQuinzaineMinJours, label: Jours de repos par quinzaine, type: number }
       - { name: delaiPrevenanceHeures, label: Délai de prévenance d'un changement de planning (h), type: number }
+      - { name: rhParAn, label: Repos hebdomadaires attendus par an, type: number }
+      - { name: gardeEnfantJours, label: Jours de garde d'enfant par an (temps plein), type: number }
+      - { name: valeurPointMensuel, label: Valeur mensuelle du point d'indice (€), type: number }
+      - { name: heuresAnnuellesTauxHoraire, label: Heures annuelles pour le taux horaire, type: number }
+      - { name: majorationNuitPct, label: Majoration des heures de nuit (%), type: number }
+      - { name: indemniteDimancheFerie8h, label: Indemnité dimanche et férié pour 8 h (€), type: number }
+      - { name: coefHeuresSup1, label: Coefficient des premières heures supplémentaires, type: number }
+      - { name: coefHeuresSup2, label: Coefficient des heures supplémentaires suivantes, type: number }
+      - { name: seuilHeuresSup, label: Nombre d'heures au premier coefficient, type: number }
+      - { name: maladieTauxPct, label: Traitement versé en arrêt maladie (%), type: number }
+      - { name: maladieJoursTauxPlein, label: Nombre de jours à ce taux, type: number }
       - { name: nuitDebut, label: Début des heures de nuit (HH:MM), type: string }
       - { name: nuitFin, label: Fin des heures de nuit (HH:MM), type: string }
       - { name: lundiPentecoteTravaille, label: Lundi de Pentecôte = journée de solidarité travaillée, type: boolean }

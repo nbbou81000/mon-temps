@@ -48,11 +48,19 @@ export const nomFerie = (s) => feries(Number(s.slice(0, 4)))[s] || null;
 export const estPentecote = (s) => nomFerie(s) === 'Lundi de Pentecôte';
 
 // ---------- Codes ----------
+export const PALETTE = ['ocre', 'sarcelle', 'brique', 'prune', 'olive'];
+const TEINTE_TYPE = { nuit: 'indigo', repos: 'gris', rtt: 'azur', recup: 'turquoise', conge: 'vert', cet: 'vert', assimile: 'ambre', greve: 'rouge' };
 export function tousLesCodes(cfg, etat) {
   const perso = (etat && etat.codesPerso) || [];
-  const map = new Map();
-  for (const c of cfg.codes) map.set(c.code, c);
-  for (const c of perso) map.set(c.code, c);
+  const brut = new Map();
+  for (const c of cfg.codes) brut.set(c.code, c);
+  for (const c of perso) brut.set(c.code, c);
+  // Une teinte par code : celle choisie, sinon une couleur différente pour chaque horaire de travail.
+  const map = new Map(); let k = 0;
+  for (const c of brut.values()) {
+    const auto = c.type === 'travail' ? PALETTE[k++ % PALETTE.length] : (TEINTE_TYPE[c.type] || 'gris');
+    map.set(c.code, { ...c, teinte: c.couleur || auto });
+  }
   return map;
 }
 
@@ -150,7 +158,7 @@ export function estJourOuvreTheorique(date, cfg) {
 }
 export function theoriqueJour(date, j, etat, cfg) {
   if (!estJourOuvreTheorique(date, cfg)) return 0;
-  if (j && j.info && j.info.type === 'conge') return 0;
+  if (j && j.info && (j.info.type === 'conge' || j.info.type === 'cet')) return 0;
   return Math.round(cfg.regles.valeurJourneeHeures * 60 * quotite(etat, cfg));
 }
 export function creditJour(date, j, etat, cfg, codes) {
@@ -210,7 +218,7 @@ export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui(), profondeur =
   else if (aDesSaisies(etat, annee - 1) && profondeur < 3) { report = bilanAnnee(annee - 1, etat, cfg, iso(annee - 1, 12, 31), profondeur + 1).solde; reportAuto = true; }
 
   // Compteurs sur l'année entière (prévus compris) pour les congés.
-  let rtt = 0, ca = 0, recup = 0, caHorsSaison = 0;
+  let rtt = 0, ca = 0, recup = 0, caHorsSaison = 0, rh = 0, ge = 0, nuits = 0, cetPris = 0, feriesTravailles = 0, dimanchesTravailles = 0;
   const caJours = [];
   const djf = { minutes: 0, jours: new Set() };
   const ps = cfg.regles.periodeEstivale || { debut: '05-01', fin: '10-31' };
@@ -221,12 +229,19 @@ export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui(), profondeur =
     if (!j || !j.info) continue;
     if (j.info.type === 'rtt') rtt++;
     if (j.info.type === 'recup') recup++;
+    if (j.info.type === 'cet') cetPris++;
+    if (d <= fin && (j.info.compte === 'rh' || j.code === 'RH')) rh++;
+    if (j.info.compte === 'ge' || j.code === 'GE') ge++;
     if (j.code === 'CA' || (j.info.type === 'conge' && j.info.compteCA)) {
       ca++; caJours.push(d);
       const md = d.slice(5);
       if (md < ps.debut || md > ps.fin) caHorsSaison++;
     }
-    if (d <= fin) { const r = minutesDJF(blocs(j)); djf.minutes += r.minutes; r.jours.forEach((x) => djf.jours.add(x)); }
+    if (d <= fin) {
+      const bl = blocs(j); const r = minutesDJF(bl); djf.minutes += r.minutes;
+      r.jours.forEach((x) => { if (!djf.jours.has(x)) { djf.jours.add(x); if (nomFerie(x)) feriesTravailles++; else dimanchesTravailles++; } });
+      if (minutesNuit(bl, cfg) >= 60) nuits++;
+    }
   }
   const v = (k) => (pd && Number(pd[k])) || 0;
   rtt += v('rttPris'); ca += v('caPris'); caHorsSaison += v('caHorsSaison');
@@ -241,6 +256,8 @@ export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui(), profondeur =
     solde: cumul.realise - cumul.theorique + report,
     theorique: cumul.theorique, realise: cumul.realise, depassements: cumul.depassements, nuit: cumul.nuit,
     saisis: cumul.saisis, total: cumul.total, manquants: cumul.manquants,
+    rhPris: rh, rhRepere: Math.round((cfg.regles.rhParAn || 104)), gePris: ge, geDroit: (cfg.regles.gardeEnfantJours || 6) * (etat.profil && etat.profil.geDouble ? 2 : 1) * q,
+    nuits, cetPris, feriesTravailles, dimanchesTravailles, recupMin: recup * Math.round(cfg.regles.valeurJourneeHeures * 60 * q),
     rttPris: rtt, rttDroit: Math.round((cfg.regles.rttParAn || 0) * q), recupPris: recup,
     caPris: ca, caDroit: Math.round((cfg.regles.caParAn || 25) * q), caHorsSaison, bonusHS, bonusFrac,
     djfMinutes: djf.minutes + djfMinAvant, djfJours: djf.jours.size + djfJoursAvant
@@ -340,7 +357,7 @@ export function controles(debut, fin, etat, cfg) {
     for (let k = 0; k < 14; k++) {
       const d = depuisNum(n + k); const j = js[d] !== undefined ? js[d] : journee(d, etat, codes);
       if (!j) { complete = false; break; }
-      if (j.info && ['conge', 'assimile', 'greve', 'rtt', 'recup'].includes(j.info.type)) exclue = true;
+      if (j.info && ['conge', 'cet', 'assimile', 'greve', 'rtt', 'recup'].includes(j.info.type)) exclue = true;
       const touche = tous.some((t) => t.fin > (n + k) * JOUR_MIN && t.debut < (n + k + 1) * JOUR_MIN);
       jours.push({ d, repos: !touche });
     }
@@ -366,3 +383,26 @@ export const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'jui
 export const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 export function courte(d) { const [, m, j] = d.split('-').map(Number); return `${j} ${MOIS_COURTS[m - 1]}`; }
 export function longue(d) { const [y, m, j] = d.split('-').map(Number); return `${JOURS[jourSemaine(d)]} ${j} ${MOIS[m - 1]} ${y}`; }
+
+// ---------- Compte épargne-temps ----------
+export function soldeCet(etat, cfg) {
+  const codes = tousLesCodes(cfg, etat);
+  const epargne = ((etat.cet && etat.cet.mouvements) || []).reduce((t, m) => t + (Number(m.jours) || 0), 0);
+  let pris = 0;
+  for (const d of Object.keys(etat.jours || {})) { const j = journee(d, etat, codes); if (j && j.info && j.info.type === 'cet') pris++; }
+  return { epargne, pris, solde: epargne - pris };
+}
+
+// Détail d'une période pour la paie : heures de nuit, dimanches et fériés, dépassements.
+export function elementsPaie(debut, fin, etat, cfg) {
+  const codes = tousLesCodes(cfg, etat); let nuit = 0, djf = 0, dep = 0, travail = 0;
+  for (let n = jourNum(debut); n <= jourNum(fin); n++) {
+    const j = journee(depuisNum(n), etat, codes); if (!j) continue;
+    const bl = blocs(j); nuit += minutesNuit(bl, cfg); djf += minutesDJF(bl).minutes; dep += Math.max(0, j.depassementMin); travail += j.effMin;
+  }
+  return { nuit, djf, dep, travail };
+}
+export function numeroSemaine(d) {
+  const n = jourNum(d); const jeudi = n - jourSemaine(d) + 3; const an = Number(depuisNum(jeudi).slice(0, 4));
+  return 1 + Math.floor((jeudi - jourNum(iso(an, 1, 4)) + jourSemaine(iso(an, 1, 4))) / 7);
+}

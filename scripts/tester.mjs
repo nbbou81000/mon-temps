@@ -17,7 +17,7 @@ for (const k of ['valeurJourneeHeures', 'reposQuotidienMinHeures', 'reposHebdoMi
 const vus = new Set();
 for (const c of cfg.codes) {
   t(`code ${c.code} unique`, !vus.has(c.code)); vus.add(c.code);
-  t(`code ${c.code} a un type connu`, ['travail', 'nuit', 'repos', 'rtt', 'conge', 'recup', 'assimile', 'greve'].includes(c.type));
+  t(`code ${c.code} a un type connu`, ['travail', 'nuit', 'repos', 'rtt', 'conge', 'recup', 'cet', 'assimile', 'greve'].includes(c.type));
   if (c.type === 'travail' || c.type === 'nuit') t(`code ${c.code} a des horaires`, /^\d\d:\d\d$/.test(c.debut) && /^\d\d:\d\d$/.test(c.fin));
 }
 t('nom présent', typeof cfg.nom === 'string' && cfg.nom.trim().length > 0);
@@ -55,6 +55,9 @@ t('point de départ : solde repris', b26.report === 600 && b26.depart === '2026-
 t('point de départ : RTT et CA repris', b26.rttPris === 10 && b26.caPris === 20);
 const b27 = M.bilanAnnee(2027, e2, cfg, '2027-01-01');
 t('report automatique au 1er janvier', b27.reportAuto === true && b27.report === M.bilanAnnee(2026, e2, cfg, '2026-12-31').solde);
+
+t('semaine ISO', M.numeroSemaine('2026-11-11') === 46 && M.numeroSemaine('2027-01-01') === 53);
+t('teintes distinctes', new Set([...M.tousLesCodes(cfg, etat).values()].filter((c) => c.type === 'travail').slice(0, 3).map((c) => c.teinte)).size === 3);
 
 console.log(`${ok} tests réussis, ${ko} en échec`);
 if (ko) process.exit(1);

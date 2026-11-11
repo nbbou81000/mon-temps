@@ -264,3 +264,122 @@ nav.bas .point{position:absolute;top:4px;left:calc(50% + 8px);width:8px;height:8
 .video-boite video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .video-boite .viseur{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:16px;pointer-events:none}
 .video-boite .btn{position:relative;z-index:1}
+
+/* ---------- Couleurs par évènement ---------- */
+:root{--kp-vert:#4E9A45;--kp-azur:#5B8BC9;--kp-gris:#B9B1A6;--kp-ambre:#D9962B}
+.k-ocre{--kf:#F6ECD2;--kt:#6B4A00;--kp:#D9A520}
+.k-sarcelle{--kf:#D6EEEA;--kt:#0E4F47;--kp:#2A9D8F}
+.k-brique{--kf:#F7E1D6;--kt:#7A2E12;--kp:#C8553D}
+.k-prune{--kf:#EBDDF0;--kt:#55256B;--kp:#8E4BA8}
+.k-olive{--kf:#E7EBCF;--kt:#4A5210;--kp:#8A9A1B}
+.k-indigo{--kf:#2A2F5B;--kt:#EEF0FF;--kp:#2A2F5B}
+.k-gris{--kp:#CFC8BE}.k-azur{--kp:#5B8BC9}.k-turquoise{--kp:#3AA0B8}.k-vert{--kp:#4E9A45}.k-ambre{--kp:#D9962B}.k-rouge{--kp:#E30613}
+[data-theme="sombre"] .k-ocre{--kf:#3A2F12;--kt:#EBCB7A}
+[data-theme="sombre"] .k-sarcelle{--kf:#10312D;--kt:#8FD6CB}
+[data-theme="sombre"] .k-brique{--kf:#3D2117;--kt:#F0B49A}
+[data-theme="sombre"] .k-prune{--kf:#2F1C38;--kt:#D9B3EA}
+[data-theme="sombre"] .k-olive{--kf:#2B3010;--kt:#CBD58A}
+[data-theme="sombre"] .k-indigo{--kf:#3A4085;--kt:#EEF0FF;--kp:#7C84E0}
+[data-theme="sombre"] .k-gris{--kp:#5A544D}
+.case.k,.code.k,.pilule.k,.jour-carte.k{background:var(--kf);border-color:var(--kf);color:var(--kt)}
+.case.k .n{color:var(--kt);opacity:.72}
+.case.k.prevu{background:transparent;border:1px dashed var(--kp);color:var(--encre2)}
+.case.k.prevu .n{color:var(--sourdine);opacity:1}
+[data-theme="sombre"] .case.k.prevu{color:var(--kt)}
+.case.k.auj,.case.auj{border:2px solid var(--rouge)}
+.case.t-recup,.puce.t-recup{background:#DDF0F4;border-color:#DDF0F4;color:#0F4F5E}
+[data-theme="sombre"] .case.t-recup,[data-theme="sombre"] .puce.t-recup{background:#12313A;border-color:#12313A;color:#9AD6E4}
+.case.t-cet,.puce.t-cet,.pilule.t-cet{background:var(--vert-fond);border-color:var(--vert-fond);color:var(--vert)}
+.case.t-greve,.puce.t-greve,.pilule.t-greve{background:var(--rouge-fond);border-color:var(--rouge-fond);color:var(--rouge-texte)}
+.case .plus{position:absolute;bottom:3px;right:5px;font-size:.75rem;font-weight:800;color:var(--rouge-texte);line-height:1}
+.code.k span{opacity:.85}
+.code[aria-pressed="true"],.code.k[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:var(--fond)}
+.pt{display:block;border-radius:2px;background:var(--kp)}
+.pilule{display:inline-flex;align-items:center;justify-content:center;min-width:3.25rem;height:1.875rem;padding:0 .5rem;border-radius:7px;font-size:.875rem;font-weight:800;font-stretch:82%;border:1px solid var(--filet);background:var(--surface);flex-shrink:0}
+.pilule.t-repos{background:var(--gris-fond);border-color:var(--gris-fond);color:var(--sourdine)}
+.pilule.t-rtt{background:var(--bleu-fond);border-color:var(--bleu-fond);color:var(--bleu)}
+.pilule.t-conge{background:var(--vert-fond);border-color:var(--vert-fond);color:var(--vert)}
+.pilule.t-assimile{background:var(--ambre-fond);border-color:var(--ambre-fond);color:var(--ambre)}
+.pilule.t-recup{background:#DDF0F4;border-color:#DDF0F4;color:#0F4F5E}
+.pilule.vide{color:var(--pointille);border-style:dashed}
+.nuancier{display:flex;gap:.5rem;flex-wrap:wrap}
+.nuancier button{width:2.75rem;height:2.75rem;border-radius:10px;border:1px solid var(--filet);background:var(--kp, var(--surface));font-size:.6875rem;font-weight:700;cursor:pointer;color:var(--sourdine)}
+.nuancier button[aria-pressed="true"]{outline:3px solid var(--encre);outline-offset:2px}
+
+/* ---------- Vues du planning ---------- */
+.vues{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:.75rem 1rem .875rem;background:var(--filet2);border-radius:10px;padding:3px}
+.vues a{height:2.25rem;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:600;color:var(--sourdine);text-decoration:none}
+.vues a[aria-current="page"]{background:var(--surface);color:var(--encre);font-weight:700;box-shadow:var(--ombre)}
+.annee{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.875rem .75rem;padding:0 1rem}
+.mini-mois{text-decoration:none;color:var(--encre);display:flex;flex-direction:column;gap:.375rem;padding:.5rem;border-radius:10px;background:var(--surface);border:1px solid var(--filet)}
+.mini-mois b{font-size:.75rem;font-weight:800;font-stretch:85%}
+.mini-grille{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.mini-grille .pt{aspect-ratio:1}
+.mini-grille .pt.rien{background:var(--filet2)}
+.mini-grille .pt.vide-h{background:transparent}
+.mini-grille .pt.auj{outline:2px solid var(--rouge);outline-offset:0}
+.repartition{display:flex;flex-wrap:wrap;gap:.5rem 1rem;font-size:.8125rem}
+.repartition span{display:flex;align-items:center;gap:.375rem}
+.repartition .pt{width:.625rem;height:.625rem}
+.ligne-jour{display:grid!important;grid-template-columns:2.5rem auto minmax(0,1fr) auto;gap:.625rem;align-items:center}
+.ligne-jour.auj{box-shadow:inset 3px 0 0 var(--rouge)}
+.ligne-jour .jr{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.ligne-jour .jr b{font-size:1.125rem;font-weight:800}
+.ligne-jour .jr span{font-size:.6875rem;color:var(--sourdine);font-weight:700;text-transform:uppercase}
+.ligne-jour .jr .ferie{color:var(--rouge-texte)}
+.ligne-jour .h{font-size:.875rem;color:var(--encre2);min-width:0}
+.ligne-jour .d{font-weight:700;text-align:right;font-size:.875rem}
+.ligne-jour .sous{display:block;font-size:.6875rem;color:var(--sourdine);font-weight:500}
+.jour-carte{border-width:1px}
+.jour-carte:not(.k){background:var(--surface)}
+.code-geant{margin:0;font-size:2.5rem;line-height:1;font-weight:800;font-stretch:78%}
+
+/* ---------- Compteurs ---------- */
+.geant{font-size:2.75rem;line-height:1;font-weight:800;font-stretch:80%}
+.aide{width:1.75rem;height:1.75rem;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:var(--sourdine);font-size:.8125rem;font-weight:800;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;position:relative}
+.aide::after{content:"";position:absolute;inset:-.5rem}
+.carte.sombre .aide{color:var(--carte-sombre-texte)}
+.tuile .l{display:flex;justify-content:space-between;align-items:flex-start;gap:.375rem}
+.tuile{display:flex;flex-direction:column}
+.lien-tuile{font-size:.8125rem;font-weight:700;margin-top:.5rem;text-decoration:none}
+.entete-bloc{padding:.75rem .875rem .5rem;display:flex;justify-content:space-between;align-items:center}
+.regle-ok{display:flex;justify-content:space-between;align-items:center;padding:.625rem .875rem;border-top:1px solid var(--filet2);font-size:.875rem}
+.lien-clair{background:none;border:0;color:var(--carte-sombre-texte);font-size:.8125rem;font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:.625rem 0 0;cursor:pointer}
+.mois-table{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:.8125rem}
+.mois-table th{font-size:.6875rem;text-transform:uppercase;color:var(--carte-sombre-texte);text-align:right;padding:.25rem 0;font-weight:700}
+.mois-table th:first-child,.mois-table td:first-child{text-align:left}
+.mois-table td{text-align:right;padding:.3125rem 0;border-top:1px solid #3B3631}
+.mois-table .pos{color:#A8D69C}.mois-table .neg{color:#FF8A8A}
+.panneau-info{max-height:80vh;overflow-y:auto}
+.panneau-info .texte{font-size:.9375rem}
+
+/* ---------- Outils ---------- */
+.res{display:flex;flex-direction:column;gap:.5rem}
+.res:empty{display:none}
+.res-ligne{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.9375rem}
+.res-ligne span{color:var(--encre2)}
+.res-ligne.fort{border-top:1px solid var(--filet);padding-top:.5rem;font-size:1.0625rem}
+.res-ligne.fort span{color:var(--encre);font-weight:700}
+.res-ligne.fort b{font-size:1.25rem;font-stretch:85%}
+.btn.grand{height:auto;min-height:4rem;justify-content:flex-start;padding:.75rem 1rem;gap:.875rem;text-align:left}
+.btn.grand span{display:flex;flex-direction:column;line-height:1.25}
+.btn.grand small{font-size:.8125rem;font-weight:500;opacity:.85}
+
+/* ---------- En-tête et navigation à 5 onglets ---------- */
+.haut .marque{min-width:0}.haut .marque span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.haut .btn-icone{width:2.5rem}
+nav.bas{grid-template-columns:repeat(5,minmax(0,1fr));padding-left:4px;padding-right:4px}
+
+/* ---------- Petits effets ---------- */
+.btn,.case,.code,.puce,.btn-icone,.tuile,.mini-mois,.actu,.reseau,.liste a.lien,.vues a,.segment button{transition:transform .12s ease,background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.btn:active,.case:active,.code:active,.puce:active,.mini-mois:active,.reseau:active{transform:scale(.97)}
+.liste a.lien:active,.liste button.lien:active{background:var(--filet2)}
+@media (hover:hover){.case:not(.hors):hover,.mini-mois:hover,.actu:hover,.reseau:hover{box-shadow:0 2px 8px rgba(22,19,15,.10)}.liste a.lien:hover{background:color-mix(in srgb,var(--filet2) 55%,transparent)}}
+#appli.entree>.page,#appli.entree>.cal,#appli.entree>.annee,#appli.entree>.bandeau-stats,#appli.entree>section,#appli.entree>article{animation:arrive .22s ease-out both}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#appli.entree .barres i{animation:pousse .5s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom}
+#appli.entree .barres .b i{transform-origin:top}
+@keyframes pousse{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+#appli.entree .jauge i{animation:remplit .5s ease-out both;transform-origin:left}
+@keyframes remplit{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.case.auj{box-shadow:0 0 0 3px color-mix(in srgb,var(--rouge) 18%,transparent)}
