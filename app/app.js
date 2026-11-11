@@ -2,17 +2,18 @@
 import * as M from './moteur.js';
 import * as St from './stockage.js';
 import { S, codes, sauver, aller, joursDepuisSauvegarde, appliquerAffichage } from './etat.js';
-import { esc, ic, chevron, toast, navBas, enteteRetour, badgeProvisoire, emettre, mailto } from './commun.js';
+import { esc, ic, chevron, toast, navBas, enteteRetour, badgeProvisoire, emettre, mailto, chargerConfig } from './commun.js';
+import { barreHaut, panneauAffichage, brancherAffichage } from './entete.js';
 import * as V from './vues2.js';
 import * as Visite from './visite.js';
+import * as T from './transfert.js';
 
 const racine = document.getElementById('appli');
 
 // ---------- Démarrage ----------
 async function demarrer() {
   try {
-    const r = await fetch('../config/etablissement.json', { cache: 'no-cache' });
-    S.cfg = await r.json();
+    S.cfg = await chargerConfig('../');
   } catch (e) {
     racine.innerHTML = '<div class="page" style="padding-top:3rem"><h1>Hors ligne</h1><p class="texte">Ouvre l\'appli une première fois avec une connexion internet.</p></div>';
     return;
@@ -25,7 +26,7 @@ async function demarrer() {
   St.protegerStockage();
   S.rendre = rendre;
   window.addEventListener('hashchange', () => rendre(true));
-  if (!S.etat.profil && !location.hash.startsWith('#/bienvenue')) location.hash = '#/bienvenue';
+  if (!S.etat.profil && !/^#\/(bienvenue|recevoir|sauvegarde|confidentialite)/.test(location.hash)) location.hash = '#/bienvenue';
   else rendre(true);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('../sw.js').catch(() => {});
 }
@@ -35,19 +36,21 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => S.et
 // ---------- Navigation ----------
 const ROUTES = {
   planning: vuePlanning, remplir: vueRemplir, jour: vueJour, compteurs: vueCompteurs, preuves: vuePreuves, preuve: vuePreuve,
-  syndicat: V.vueSyndicat, greve: V.vueGreve, desiderata: V.vueDesiderata, courriers: V.vueCourriers, signalement: V.vueSignalement, droits: V.vueDroits,
+  syndicat: V.vueSyndicat, actu: V.vueActu, transfert: T.vueTransfert, recevoir: T.vueRecevoir, greve: V.vueGreve, desiderata: V.vueDesiderata, courriers: V.vueCourriers, signalement: V.vueSignalement, droits: V.vueDroits,
   reglages: V.vueReglages, code: V.vueCode, report: V.vueReport, sauvegarde: V.vueSauvegarde, releve: V.vueReleve,
   bienvenue: V.vueBienvenue, confidentialite: V.vueConfidentialite
 };
 
 let derniereRoute = '';
+const nonLues = () => (S.cfg.actualites || []).filter((a) => a && a.date && a.date > (S.etat.reglages.actusVues || '')).length;
 function rendre(nouvelle = false) {
   const parts = (location.hash.replace(/^#\/?/, '') || 'planning').split('/').map(decodeURIComponent);
   const f = ROUTES[parts[0]] || vuePlanning;
   const v = f(parts) || {};
   const bandeau = S.demo ? `<div class="essai" role="status"><span>Mode essai · rien n'est enregistré</span><button type="button" id="quitter-essai">Quitter</button></div>` : '';
   racine.className = v.nav ? '' : 'sans-nav';
-  racine.innerHTML = bandeau + (v.html || '') + (v.nav ? navBas(v.nav) : '');
+  racine.innerHTML = bandeau + (v.html || '') + (v.nav ? navBas(v.nav, nonLues()) + panneauAffichage() : '');
+  brancherAffichage(racine);
   const q = document.getElementById('quitter-essai');
   if (q) q.onclick = () => Visite.quitterEssai();
   if (v.apres) v.apres(racine);
@@ -96,7 +99,9 @@ function vuePlanning(p) {
   const today = M.aujourdhui(); const C = codes();
   const debut = M.iso(y, m, 1), fin = M.iso(y, m, M.joursDansMois(y, m));
   const borne = fin < today ? fin : today;
-  const bilan = debut <= today ? M.bilanPeriode(debut, borne, S.etat, S.cfg) : null;
+  const premiere = Object.keys(S.etat.jours).sort()[0];
+  const departMois = premiere && premiere > debut ? premiere : debut;
+  const bilan = premiere && departMois <= borne ? M.bilanPeriode(departMois, borne, S.etat, S.cfg) : null;
   let saisis = 0; for (let n = M.jourNum(debut); n <= M.jourNum(fin); n++) if (S.etat.jours[M.depuisNum(n)]) saisis++;
   const nbAlertes = S.etat.reglages.controles ? M.controles(debut, fin, S.etat, S.cfg).length : 0;
   const js = joursDepuisSauvegarde();
@@ -114,9 +119,7 @@ function vuePlanning(p) {
   }
   return {
     nav: 'planning',
-    html: `<header class="haut"><div class="marque"><i></i>${esc(S.cfg.syndicat)}</div><div class="icones">
-        <a class="btn-icone" href="#/sauvegarde" data-tour="sauvegarde" aria-label="${sauvOk ? 'Sauvegarde à jour' : 'Sauvegarde à faire'}" style="color:${sauvOk ? 'var(--vert)' : 'var(--ambre)'}">${ic(sauvOk ? 'bouclier' : 'bouclierAlerte')}</a>
-        <a class="btn-icone" href="#/reglages" aria-label="Réglages">${ic('reglages')}</a></div></header>
+    html: `${barreHaut()}
       <div class="ligne-titre"><h1>${esc(M.MOIS[m - 1].replace(/^./, (c) => c.toUpperCase()))} <span class="pale">${y}</span></h1>
         <div class="fleches"><a href="#/planning/${moisVoisin(y, m, -1)}" aria-label="Mois précédent">${ic('gauche')}</a><a href="#/planning/${moisVoisin(y, m, 1)}" aria-label="Mois suivant">${ic('droite')}</a></div></div>
       <div class="bandeau-stats" style="margin-top:.875rem">
@@ -274,8 +277,8 @@ function vueCompteurs(p) {
   const listeAlertes = alertes.slice().reverse().slice(0, S.vue.toutesAlertes ? 999 : 4).map((a) => `<li class="alerte grave">${ic('alerte')}<div><div class="t">${esc(a.regle)}${a.futur ? ' · à venir' : ''}</div><div class="m">${esc(a.message)} <a href="#/jour/${a.date}">Voir le jour</a></div></div></li>`).join('');
   return {
     nav: 'compteurs',
-    html: `<header class="haut" style="align-items:flex-end;padding-top:calc(1.375rem + env(safe-area-inset-top))"><h1>Compteurs <span class="pale">${y}</span></h1>
-        <div class="fleches"><a href="#/compteurs/${y - 1}" aria-label="Année précédente">${ic('gauche')}</a><a href="#/compteurs/${y + 1}" aria-label="Année suivante">${ic('droite')}</a></div></header>
+    html: `${barreHaut()}<div class="ligne-titre"><h1>Compteurs <span class="pale">${y}</span></h1>
+        <div class="fleches"><a href="#/compteurs/${y - 1}" aria-label="Année précédente">${ic('gauche')}</a><a href="#/compteurs/${y + 1}" aria-label="Année suivante">${ic('droite')}</a></div></div>
       <div class="page" style="margin-top:1rem">
         <section class="carte sombre" data-tour="solde" aria-label="Solde de l'année">
           <p class="etiquette">Solde au ${M.courte(b.jusqua)}${b.depart && b.depart > `${y}-01-01` ? ` · suivi depuis le ${M.courte(b.depart)}` : ''}</p>
@@ -321,10 +324,16 @@ function vuePreuves(p) {
     const q = new Date(quand);
     return `Prévenu·e le ${q.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à ${q.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${h >= 0 ? ` · ${h} h avant` : ''}`;
   };
+  const badgeDelai = (r) => {
+    const seuil = Number(S.cfg.regles.delaiPrevenanceHeures); if (!seuil || !r.prevenuLe) return '';
+    const info = C.get(r.nouveau); const debut = info && info.debut ? M.hm(info.debut) : 0;
+    const h = (new Date(`${r.date}T${M.pad(Math.floor(debut / 60))}:${M.pad(debut % 60)}`) - new Date(r.prevenuLe)) / 36e5;
+    return `<span><span class="badge ${h >= seuil ? 'vert' : 'rouge'}">${h >= seuil ? 'Délai respecté' : `Moins de ${seuil} h`}</span>${badgeProvisoire(S.cfg, 'regles.delaiPrevenanceHeures')}</span>`;
+  };
   const bloc = (d) => `<div class="date-bloc"><b>${Number(d.slice(8))}</b><span>${esc(M.MOIS_COURTS[Number(d.slice(5, 7)) - 1].replace('.', ''))}</span></div>`;
   let items = '';
   if (onglet === 'rappels') items = rappels.map((r) => `<li><a class="lien" href="#/preuve/${encodeURIComponent(r.id)}" style="align-items:flex-start">${bloc(r.date)}<span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="display:flex;justify-content:space-between;gap:.5rem"><b>Rappelé·e sur un repos</b><b>${esc(r.code || '')}</b></span><span style="font-size:.8125rem;color:var(--encre2)">${esc(delai(r.date, r.appelLe, r.code)) || 'Heure de l\'appel non notée'}</span><span><span class="badge ${r.compense ? 'vert' : 'rouge'}">${r.compense ? 'Compensé' : 'Non compensé'}</span></span></span></a></li>`).join('');
-  if (onglet === 'changements') items = changes.map((r) => `<li><a class="lien" href="#/preuve/${encodeURIComponent(r.id)}" style="align-items:flex-start">${bloc(r.date)}<span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="display:flex;justify-content:space-between;gap:.5rem"><b>Planning changé</b><b>${esc(r.ancien)} → ${esc(r.nouveau)}</b></span><span style="font-size:.8125rem;color:var(--encre2)">${esc(delai(r.date, r.prevenuLe, r.nouveau)) || 'Date de prévenance non notée'}</span></span></a></li>`).join('');
+  if (onglet === 'changements') items = changes.map((r) => `<li><a class="lien" href="#/preuve/${encodeURIComponent(r.id)}" style="align-items:flex-start">${bloc(r.date)}<span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="display:flex;justify-content:space-between;gap:.5rem"><b>Planning changé</b><b>${esc(r.ancien)} → ${esc(r.nouveau)}</b></span><span style="font-size:.8125rem;color:var(--encre2)">${esc(delai(r.date, r.prevenuLe, r.nouveau)) || 'Date de prévenance non notée'}</span>${badgeDelai(r)}</span></a></li>`).join('');
   if (onglet === 'depassements') items = deps.map((j) => `<li><a class="lien" href="#/jour/${j.date}" style="align-items:flex-start">${bloc(j.date)}<span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="display:flex;justify-content:space-between;gap:.5rem"><b>${esc(j.code)}</b><b>${M.formatDuree(j.depassementMin, true)}</b></span>${j.note ? `<span style="font-size:.8125rem;color:var(--encre2)">${esc(j.note)}</span>` : ''}</span></a></li>`).join('');
   const vides = { rappels: 'Aucun rappel noté. Quand on te rappelle sur un repos, coche la case dans la saisie de la journée.', changements: 'Aucun changement noté. Il apparaît quand ce que tu as fait diffère de ce qui était prévu.', depassements: 'Aucun dépassement noté pour l\'instant.' };
   const resume = () => {
@@ -336,7 +345,7 @@ function vuePreuves(p) {
   };
   return {
     nav: 'preuves',
-    html: `<header class="haut" style="padding-top:calc(1.375rem + env(safe-area-inset-top))"><h1>Mes preuves</h1></header>
+    html: `${barreHaut()}<div class="ligne-titre"><h1>Mes preuves</h1></div>
       <div class="page" style="margin-top:.5rem">
         <p class="texte">Rappels sur repos, changements de dernière minute, dépassements : tout est daté et reste sur ton téléphone, prêt à montrer au syndicat.</p>
         <div class="onglets" role="tablist" aria-label="Type de preuve" data-tour="onglets-preuves">

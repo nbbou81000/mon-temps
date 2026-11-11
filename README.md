@@ -1,67 +1,82 @@
 # Mon Temps
 
-Appli web gratuite de suivi du temps de travail pour les agents du CH d'Albi, proposée par la CGT.
+Appli web gratuite de suivi du temps de travail pour les agents hospitaliers, proposée par la CGT.
 Tout reste sur le téléphone de l'agent : pas de compte, pas de serveur, aucune collecte.
 
-Écrite de zéro (aucun code repris d'une autre appli), à partir des textes officiels :
-décret n° 2002-9 du 4 janvier 2002 (temps de travail dans la fonction publique hospitalière).
+Écrite de zéro, à partir des textes officiels (décret n° 2002-9 du 4 janvier 2002).
 
 ---
 
-## Tout se fait depuis le site GitHub, sans rien installer
+## Modifier le contenu sans toucher au code : Pages CMS
 
-### Mettre le site en ligne (une seule fois)
+Nom de l'appli, logo, icône, couleur, contacts, réseaux sociaux, actualités, agenda,
+codes horaires, règles de calcul : tout se modifie dans des formulaires.
 
-1. Dans le dépôt, onglet **Settings** › **Pages** (menu de gauche).
-2. Sous *Build and deployment* › *Source*, choisis **GitHub Actions**.
-3. Onglet **Actions** › **Publier le site** › bouton **Run workflow** › **Run workflow**.
-4. Au bout de 1 à 2 minutes, le site est en ligne à l'adresse affichée dans *Settings › Pages*.
+1. Ouvre **https://app.pagescms.org** et connecte-toi avec GitHub.
+2. Choisis ce dépôt. Trois rubriques apparaissent :
+   - **Appli, logo, contacts et réseaux** (avec les actualités et l'agenda) ;
+   - **Codes horaires** ;
+   - **Règles de calcul**.
+3. Modifie, puis clique sur **Save**. Le site se met à jour tout seul en 2 minutes environ.
 
-Ensuite, chaque modification du dépôt republie le site toute seule.
+Pour le logo ou l'icône : clique sur le champ image, puis sur **Upload** et choisis ton fichier.
+L'icône de l'appli (écran d'accueil du téléphone) est fabriquée automatiquement dans toutes les tailles.
 
-### Changer le nom de l'appli (ou tout autre réglage)
+Pour un réseau social : colle simplement l'adresse complète de la page (ex. `https://www.facebook.com/…`).
+Le bon logo (Facebook, Instagram, WhatsApp, TikTok, YouTube, X, Bluesky, Threads, Telegram) s'affiche tout seul.
+Un champ laissé vide n'apparaît pas dans l'appli.
 
-Tout ce qui est propre à l'établissement est dans **un seul fichier** : `config/etablissement.json`.
-
-1. Ouvre `config` › `etablissement.json`, puis clique sur le crayon (**Edit this file**).
-2. Modifie la ligne `"nom": "Mon Temps",` en gardant les guillemets et la virgule.
-3. Clique sur **Commit changes…** puis encore **Commit changes**.
-4. Attends 2 minutes : le nouveau nom apparaît partout (page d'accueil, appli, icône installée*).
-
-\* Sur un téléphone où l'appli est déjà installée, le nom sous l'icône peut mettre quelques jours à changer : c'est le téléphone qui décide.
-
-Si une faute de frappe casse le fichier (une virgule oubliée par exemple), la publication s'arrête
-et **l'ancienne version reste en ligne** : rien n'est cassé pour les agents. L'onglet **Actions**
-affiche alors une croix rouge ; il suffit de corriger le fichier.
-
-### Ce qu'on peut régler dans `etablissement.json`
-
-| Clé | À quoi ça sert |
-|---|---|
-| `nom`, `slogan`, `syndicat`, `etablissement`, `couleur` | Textes et couleur affichés partout |
-| `regles.valeurJourneeHeures` | Valeur d'une journée pour calculer le dû (7 h par défaut) |
-| `regles.rttParAn`, `regles.caParAn` | Droits annuels à temps plein |
-| `regles.reposQuotidienMinHeures` | 12 h, ou 11 h si un accord local le prévoit |
-| `codes` | Les codes horaires : `code`, `libelle`, `type`, `debut`, `fin`, `pauseMin` (et `debut2`/`fin2` pour un service coupé) |
-| `metiers` | La liste proposée aux agents |
-| `contacts` | Adresses mail (général, grève, signalements, adhésion), téléphone, local, réseaux |
-| `agenda` | Rendez-vous affichés dans l'onglet Syndicat, ex. `{ "date": "2026-12-03", "titre": "AG", "lieu": "Salle B" }` |
-| `aValider` | Valeurs encore provisoires : un badge « provisoire » s'affiche à côté. Vider la liste quand tout est confirmé |
-
-Types de codes possibles : `travail`, `nuit`, `repos`, `rtt`, `conge`, `recup`, `assimile` (maladie, formation…), `greve`.
-
-### Republier à la main
-
-Onglet **Actions** › **Publier le site** › **Run workflow**.
+Si une saisie casse quelque chose, la publication s'arrête et **l'ancienne version reste en ligne**.
 
 ---
 
-## Organisation du dépôt
+## Publication anonyme (recommandée)
+
+But : que le site public ne mène jamais au compte GitHub personnel de son auteur.
+
+Principe : ce dépôt (le code, les modifications) reste **privé**. À chaque modification, il copie
+automatiquement le site terminé dans le dépôt **public** d'un **compte GitHub dédié**, sans historique
+ni nom d'auteur. Le public ne voit que ce compte dédié.
+
+### 1. Rendre ce dépôt privé
+**Settings** › **General** › tout en bas, **Change repository visibility** › **Make private**.
+
+### 2. Créer le compte dédié
+1. Crée une adresse mail neuve, réservée à ça (par ex. sur Proton Mail, gratuit).
+2. Déconnecte-toi de GitHub (ou ouvre une fenêtre de navigation privée), puis **Sign up** avec cette adresse.
+   Le nom du compte devient l'adresse du site : `nom-du-compte.github.io`.
+3. Avec ce compte : **New repository**, nommé exactement `nom-du-compte.github.io`, **Public**,
+   coche **Add a README file**, puis **Create repository**.
+4. Dans ce dépôt public : **Settings** › **Pages** › *Source* : **Deploy from a branch**, branche **main**, dossier **/ (root)** › **Save**.
+
+### 3. Donner au dépôt privé le droit de publier
+1. Toujours connecté avec le compte dédié : photo en haut à droite › **Settings** › **Developer settings**
+   › **Personal access tokens** › **Fine-grained tokens** › **Generate new token**.
+2. Nom : `publication`. Expiration : la plus longue proposée. *Repository access* : **Only select repositories**
+   › le dépôt `nom-du-compte.github.io`. *Permissions* › **Contents** : **Read and write**.
+3. **Generate token**, puis copie le jeton affiché (il ne sera plus jamais montré).
+4. Reconnecte-toi avec ton compte habituel. Dans **ce** dépôt privé : **Settings** › **Secrets and variables** › **Actions** :
+   - onglet **Secrets** › **New repository secret** : nom `PUBLICATION_TOKEN`, valeur = le jeton copié ;
+   - onglet **Variables** › **New repository variable** : nom `DEPOT_PUBLIC`, valeur = `nom-du-compte/nom-du-compte.github.io`.
+5. Onglet **Actions** › **Publier le site** › **Run workflow**. Le site apparaît sur `https://nom-du-compte.github.io`.
+
+GitHub prévient par mail avant l'expiration du jeton : il suffit alors d'en créer un nouveau et de remplacer le secret.
+
+### Nom de domaine (facultatif)
+Pour une adresse du type `montemps.fr` : l'acheter au nom du syndicat (environ 8 à 10 € par an pour un `.fr`),
+puis le renseigner dans Pages CMS (champ *Nom de domaine*) et chez le vendeur du domaine,
+suivre la page d'aide « Managing a custom domain for your GitHub Pages site ».
+
+---
+
+## Organisation
 
 - `index.html`, `accueil.*` : page d'accueil
-- `app/` : l'appli (planning, compteurs, preuves, syndicat, réglages, sauvegarde, visite guidée)
-- `app/moteur.js` : calculs et contrôles légaux, testés automatiquement à chaque publication (`scripts/tester.mjs`)
-- `config/etablissement.json` : tous les réglages de l'établissement
-- `sw.js` : fonctionnement hors ligne
+- `app/` : l'appli (planning, compteurs, preuves, syndicat, réglages, sauvegarde, transfert par QR code, visite guidée)
+- `app/moteur.js` : calculs et contrôles légaux, testés à chaque publication (`scripts/tester.mjs`)
+- `config/contenu.json`, `config/codes.json`, `config/regles.json` : tout le contenu modifiable (via Pages CMS)
+- `images/` : logos et images envoyés depuis Pages CMS
+- `.pages.yml` : les formulaires de Pages CMS
 
-Licence MIT. Police Archivo sous licence SIL OFL 1.1.
+Licence MIT. Police Archivo (SIL OFL 1.1). Bibliothèques : qrcode-generator (MIT), jsQR (Apache 2.0),
+icônes Simple Icons (CC0).

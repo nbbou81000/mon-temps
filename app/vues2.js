@@ -2,8 +2,10 @@
 import * as M from './moteur.js';
 import * as St from './stockage.js';
 import { S, codes, sauver, aller, joursDepuisSauvegarde, appliquerAffichage } from './etat.js';
-import { esc, ic, chevron, toast, enteteRetour, telechargerFichier, mailto, badgeProvisoire } from './commun.js';
+import { esc, ic, chevron, toast, enteteRetour, telechargerFichier, mailto, badgeProvisoire, media, marque } from './commun.js';
 import * as Visite from './visite.js';
+import { barreHaut } from './entete.js';
+import { iconeReseau, NOMS } from './reseaux.js';
 
 const profil = () => S.etat.profil || {};
 const signature = () => { const p = profil(); return [p.prenom, p.metier, p.service].filter(Boolean).join(' — '); };
@@ -12,22 +14,26 @@ const lienMail = (cle, sujet, corps, cc) => mailto(S.cfg.contacts[cle] || '', su
 
 // ---------- Syndicat ----------
 export function vueSyndicat() {
-  const c = S.cfg.contacts || {}; const today = M.aujourdhui();
-  const rdv = (S.cfg.agenda || []).filter((x) => x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const c = S.cfg.contacts || {}; const r = S.cfg.reseaux || {}; const today = M.aujourdhui();
+  const rdv = (S.cfg.agenda || []).filter((x) => x && x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const actus = (S.cfg.actualites || []).filter((x) => x && x.titre).map((x, i) => ({ ...x, i })).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  const vues = S.etat.reglages.actusVues || '';
   const lien = (h, t, s) => `<li><a class="lien" href="${h}"><span>${t}<span class="sous">${s}</span></span>${chevron()}</a></li>`;
+  const ligneContact = (icone, titre, valeur, href) => `<li>${href ? `<a class="lien" href="${esc(href)}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>` : '<div class="ligne">'}<span style="display:flex;gap:.75rem;align-items:flex-start">${ic(icone)}<span>${titre}<span class="sous">${esc(valeur)}</span></span></span>${href ? chevron() + '</a>' : '</div>'}</li>`;
   const contacts = [
-    c.telephone && `<li><a class="lien" href="tel:${esc(c.telephone.replace(/\s/g, ''))}"><span>Téléphone<span class="sous">${esc(c.telephone)}</span></span>${chevron()}</a></li>`,
-    c.mailGeneral && `<li><a class="lien" href="${esc(mailto(c.mailGeneral, 'Question', ''))}"><span>Écrire au syndicat<span class="sous">${esc(c.mailGeneral)}</span></span>${chevron()}</a></li>`,
-    c.local && `<li><div class="ligne"><span>Le local<span class="sous">${esc(c.local)}${c.permanences ? ' · ' + esc(c.permanences) : ''}</span></span></div></li>`,
-    c.site && `<li><a class="lien" href="${esc(c.site)}" target="_blank" rel="noopener"><span>Site web</span>${chevron()}</a></li>`,
-    c.facebook && `<li><a class="lien" href="${esc(c.facebook)}" target="_blank" rel="noopener"><span>Facebook</span>${chevron()}</a></li>`,
-    c.instagram && `<li><a class="lien" href="${esc(c.instagram)}" target="_blank" rel="noopener"><span>Instagram</span>${chevron()}</a></li>`
+    c.telephone && ligneContact('telephone', 'Téléphone', c.telephone, 'tel:' + c.telephone.replace(/[^\d+]/g, '')),
+    c.mailGeneral && ligneContact('mail', 'Écrire au syndicat', c.mailGeneral, mailto(c.mailGeneral, '', '')),
+    (c.local || c.permanences) && ligneContact('lieu', 'Le local', [c.local, c.permanences].filter(Boolean).join(' · '), null),
+    c.adresse && ligneContact('lieu', 'Adresse', c.adresse, null),
+    r.site && ligneContact('web', 'Site internet', r.site.replace(/^https?:\/\//, ''), r.site)
   ].filter(Boolean).join('');
+  const reseaux = Object.keys(NOMS).filter((k) => r[k]).map((k) => `<a class="reseau" href="${esc(r[k])}" target="_blank" rel="noopener" aria-label="${NOMS[k]}" title="${NOMS[k]}">${iconeReseau(k, 22)}<span>${NOMS[k]}</span></a>`).join('');
   return {
     nav: 'syndicat',
-    html: `<header class="haut" style="align-items:flex-end;padding-top:calc(1.375rem + env(safe-area-inset-top))"><h1>Syndicat</h1><span class="marque" style="color:var(--rouge-texte)">${esc(S.cfg.syndicat)}</span></header>
+    html: `${barreHaut()}<div class="ligne-titre"><h1>Syndicat</h1></div>
       <div class="page" style="margin-top:.875rem">
-        ${rdv.length ? rdv.slice(0, 3).map((r) => `<section class="carte sombre" style="display:flex;align-items:center;gap:.875rem"><div class="date-bloc" style="border-color:#5A544D"><b>${Number(r.date.slice(8))}</b><span style="color:var(--carte-sombre-texte)">${esc(M.MOIS_COURTS[Number(r.date.slice(5, 7)) - 1].replace('.', ''))}</span></div><div><p class="etiquette">À venir</p><b style="display:block;font-size:.9375rem">${esc(r.titre)}</b>${r.lieu ? `<span class="petit">${esc(r.lieu)}</span>` : ''}</div></section>`).join('') : ''}
+        ${actus.length ? `<p class="etiquette">Actualités</p><div class="actus">${actus.slice(0, 5).map((x) => `<a class="actu" href="#/actu/${x.i}">${x.image ? `<img src="${esc(media(x.image))}" alt="" loading="lazy">` : ''}<span class="actu-t"><span class="petit">${x.date ? esc(M.courte(x.date)) : ''}${x.date && x.date > vues ? ' · <b style="color:var(--rouge-texte)">nouveau</b>' : ''}</span><b>${esc(x.titre)}</b>${x.texte ? `<span class="actu-r">${esc(String(x.texte).slice(0, 110))}${String(x.texte).length > 110 ? '…' : ''}</span>` : ''}</span></a>`).join('')}</div>` : ''}
+        ${rdv.length ? `<p class="etiquette">À venir</p>${rdv.slice(0, 3).map((x) => `<section class="carte sombre" style="display:flex;align-items:center;gap:.875rem"><div class="date-bloc" style="border-color:#5A544D"><b>${Number(x.date.slice(8))}</b><span style="color:var(--carte-sombre-texte)">${esc(M.MOIS_COURTS[Number(x.date.slice(5, 7)) - 1].replace('.', ''))}</span></div><div><b style="display:block;font-size:.9375rem">${esc(x.titre)}</b>${x.lieu ? `<span class="petit">${esc(x.lieu)}</span>` : ''}</div></section>`).join('')}` : ''}
         <p class="etiquette" style="margin-top:.25rem">Agir</p>
         <ul class="liste">
           ${lien('#/greve', 'Déclarer mon intention de grève', 'Le mail à ton cadre, prêt à partir')}
@@ -41,9 +47,29 @@ export function vueSyndicat() {
           ${lien('#/signalement/discrimination', 'Signaler une discrimination', 'Et demander un rendez-vous')}
         </ul>
         <p class="petit" style="margin:-.375rem 0 0">Ces messages partent de ta propre messagerie, directement aux délégué·es. L'appli ne garde rien.</p>
-        ${contacts ? `<p class="etiquette">Contacts</p><ul class="liste">${contacts}</ul>` : '<div class="carte"><p class="petit" style="margin:0">Les coordonnées du syndicat seront ajoutées très bientôt.</p></div>'}
+        ${contacts ? `<p class="etiquette">Nous trouver</p><ul class="liste">${contacts}</ul>` : '<div class="carte"><p class="petit" style="margin:0">Les coordonnées du syndicat seront ajoutées très bientôt.</p></div>'}
+        ${reseaux ? `<p class="etiquette">Nous suivre</p><div class="reseaux">${reseaux}</div>` : ''}
         ${pasDeMail('mailAdhesion') ? '' : `<a class="btn principal plein" href="${esc(lienMail('mailAdhesion', `Adhésion — ${S.cfg.syndicat}`, `Bonjour,\n\nJe souhaite adhérer à la CGT. Pouvez-vous me recontacter ?\n\n${signature()}\n`))}">Adhérer à la CGT</a>`}
-      </div>`
+      </div>`,
+    apres() {
+      const max = actus.reduce((m, x) => (x.date && x.date > m ? x.date : m), vues);
+      if (max !== vues && !S.demo) { S.etat.reglages.actusVues = max; sauver(); }
+    }
+  };
+}
+
+export function vueActu(p) {
+  const x = (S.cfg.actualites || [])[Number(p[1])];
+  if (!x) return vueSyndicat();
+  return {
+    html: `${enteteRetour('Actualité', '#/syndicat')}
+      <article class="page" style="margin-top:.75rem">
+        ${x.image ? `<img src="${esc(media(x.image))}" alt="" style="width:100%;border-radius:var(--r);display:block">` : ''}
+        ${x.date ? `<p class="etiquette">${esc(M.longue(x.date))}</p>` : ''}
+        <h2 style="font-size:1.5rem;font-stretch:85%;line-height:1.15">${esc(x.titre)}</h2>
+        ${x.texte ? String(x.texte).split(/\n{2,}/).map((para) => `<p class="texte" style="white-space:pre-line">${esc(para)}</p>`).join('') : ''}
+        ${x.lien ? `<a class="btn plein" href="${esc(x.lien)}" target="_blank" rel="noopener">${ic('web')}En savoir plus</a>` : ''}
+      </article>`
   };
 }
 
@@ -332,11 +358,16 @@ export function vueSauvegarde() {
           <button class="btn principal" id="creer" ${S.demo ? 'disabled' : ''}>${ic('cadenas')}Sauvegarder</button>
         </section>
         <section class="carte" style="display:flex;flex-direction:column;gap:.625rem">
-          <h2>Restaurer ou changer de téléphone</h2>
-          <p class="petit" style="margin:0">Sur le nouvel appareil, ouvre l'appli et choisis ici ton fichier de sauvegarde. Tes données actuelles sur cet appareil seront remplacées.</p>
+          <h2>Restaurer depuis un fichier</h2>
+          <p class="petit" style="margin:0">Choisis ton fichier de sauvegarde. Les données actuelles de cet appareil seront remplacées.</p>
           <label class="champ"><span>Fichier de sauvegarde</span><input type="file" id="fichier" accept=".json,application/json"></label>
           <label class="champ"><span>Mot de passe du fichier</span><input type="password" id="mdp3" autocomplete="current-password"></label>
           <button class="btn" id="restaurer" ${S.demo ? 'disabled' : ''}>Restaurer</button>
+        </section>
+        <section class="carte" style="display:flex;flex-direction:column;gap:.625rem">
+          <h2>Passer sur un autre téléphone</h2>
+          <p class="petit" style="margin:0">Le plus simple : un code QR qui défile sur l'ancien téléphone, que le nouveau lit avec sa caméra. Rien ne passe par internet.</p>
+          <div class="rangee"><a class="btn" href="#/transfert">${ic('qr')}Envoyer</a><a class="btn" href="#/recevoir">${ic('camera')}Recevoir</a></div>
         </section>
         <section class="carte" style="display:flex;flex-direction:column;gap:.5rem">
           <h2>Mettre mon planning dans mon agenda</h2>
@@ -430,7 +461,7 @@ export function vueReleve(p) {
 export function vueBienvenue() {
   S.vue.bv = S.vue.bv || { etape: 1, prenom: '', metier: '', quotite: 100 };
   const B = S.vue.bv;
-  const enTete = `<div style="padding:calc(2.5rem + env(safe-area-inset-top)) 1rem 0;display:flex;flex-direction:column;gap:1rem"><div class="marque"><i></i>${esc(S.cfg.syndicat)}</div>`;
+  const enTete = `<div style="padding:calc(2.5rem + env(safe-area-inset-top)) 1rem 0;display:flex;flex-direction:column;gap:1rem"><div class="marque">${marque(S.cfg)}<span>${esc(S.cfg.syndicat)}</span></div>`;
   if (B.etape === 1) return {
     html: `${enTete}<h1 style="font-size:3rem">${esc(S.cfg.nom)}</h1><p class="texte" style="font-size:1.0625rem">${esc(S.cfg.slogan || '')}</p></div>
       <div class="page" style="margin-top:1.5rem">
@@ -440,7 +471,7 @@ export function vueBienvenue() {
           <li><div class="ligne" style="align-items:flex-start">${ic('cadenas')}<span style="flex:1"><b>Rien ne sort de ton téléphone</b><span class="sous">Pas de compte, pas de serveur, aucune collecte.</span></span></div></li>
         </ul>
         <button class="btn principal plein" id="suivant">Commencer</button>
-        <a class="btn plein" href="#/sauvegarde">J'ai déjà une sauvegarde</a>
+        <div class="rangee"><a class="btn" href="#/recevoir">${ic('qr')}Je change de téléphone</a><a class="btn" href="#/sauvegarde">J'ai une sauvegarde</a></div>
       </div>`,
     apres(el) { el.querySelector('#suivant').onclick = () => { B.etape = 2; S.rendre(); }; }
   };

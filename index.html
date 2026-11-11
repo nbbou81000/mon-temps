@@ -17,7 +17,7 @@
 <body>
 <header class="barre">
   <div class="enveloppe barre-in">
-    <a class="marque" href="./"><i aria-hidden="true"></i><span data-syndicat>CGT CH d'Albi</span></a>
+    <a class="marque" href="./"><i aria-hidden="true" data-logo></i><span data-syndicat>CGT CH d'Albi</span></a>
     <a class="btn-clair" href="app/">Ouvrir l'appli</a>
   </div>
 </header>
@@ -128,6 +128,11 @@
     <a class="btn-rouge" href="app/">Lancer la visite guidée</a>
   </section>
 
+  <section class="bloc enveloppe" id="actus-accueil" aria-labelledby="t-actus" hidden>
+    <h2 id="t-actus" class="titre-section">Les dernières infos</h2>
+    <div class="actus-accueil" id="liste-actus"></div>
+  </section>
+
   <section class="bloc enveloppe" aria-labelledby="t-faq">
     <h2 id="t-faq" class="titre-section">Questions fréquentes</h2>
     <div class="faq">
@@ -143,7 +148,7 @@
 
 <footer class="pied">
   <div class="enveloppe pied-in">
-    <div><p class="marque"><i aria-hidden="true"></i><span data-syndicat>CGT CH d'Albi</span></p><p id="contact-pied"></p></div>
+    <div><p class="marque"><i aria-hidden="true"></i><span data-syndicat>CGT CH d'Albi</span></p><p id="contact-pied"></p><div class="reseaux-pied" id="reseaux-pied"></div></div>
     <div class="liens"><a href="app/#/confidentialite">Confidentialité</a><a href="mentions-legales.html">Mentions légales</a><a id="lien-source" href="https://github.com/">Code source</a></div>
   </div>
 </footer>

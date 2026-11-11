@@ -107,3 +107,15 @@ a{color:var(--rouge-fonce)}
   .telephone{width:min(17rem,82%)}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+.marque img.logo{height:2rem;width:auto;max-width:7rem;object-fit:contain;display:block}
+.barre .marque img.logo{background:#fff;border-radius:4px;padding:2px}
+.actus-accueil{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(17rem,100%),1fr));gap:1rem;margin-top:2rem}
+.actu-accueil{display:flex;flex-direction:column;gap:.375rem;background:#fff;border:1px solid var(--filet);border-radius:14px;padding:1rem;text-decoration:none;color:var(--encre)}
+.actu-accueil img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:.375rem}
+.actu-accueil .date{font-size:.75rem;font-weight:700;color:var(--rouge-fonce);text-transform:uppercase;letter-spacing:.06em}
+.actu-accueil b{font-size:1.125rem;line-height:1.25}
+.actu-accueil span:last-child{color:var(--encre2);font-size:.9375rem}
+.reseaux-pied{display:flex;gap:.5rem;margin-top:.75rem}
+.reseaux-pied a{width:2.75rem;height:2.75rem;border-radius:50%;border:1px solid var(--filet);display:flex;align-items:center;justify-content:center;color:var(--encre)}
+.reseaux-pied a:hover{background:var(--encre);color:#fff}

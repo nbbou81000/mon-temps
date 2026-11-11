@@ -1,6 +1,6 @@
 (async () => {
   try {
-    const cfg = await (await fetch('config/etablissement.json', { cache: 'no-cache' })).json();
+    const cfg = await (await fetch('config/contenu.json', { cache: 'no-cache' })).json();
     document.querySelectorAll('[data-syndicat]').forEach((e) => { e.textContent = cfg.syndicat; });
     document.title = `Mentions légales — ${cfg.nom}`;
     const t = [`Syndicat ${cfg.syndicat}.`];

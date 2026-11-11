@@ -4,10 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as M from '../app/moteur.js';
 
-const racine = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const cfg = JSON.parse(fs.readFileSync(path.join(racine, 'config/etablissement.json'), 'utf8'));
 let ok = 0, ko = 0;
 const t = (nom, cond) => { if (cond) ok++; else { ko++; console.error('ÉCHEC :', nom); } };
+const racine = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const lire = (f) => JSON.parse(fs.readFileSync(path.join(racine, 'config', f), 'utf8'));
+const contenu = lire('contenu.json'); const { aValider, ...regles } = lire('regles.json');
+const cfg = { ...contenu, regles, aValider, codes: lire('codes.json') };
+t('codes : une liste', Array.isArray(cfg.codes) && cfg.codes.length > 0);
+for (const k of ['valeurJourneeHeures', 'reposQuotidienMinHeures', 'reposHebdoMinHeures', 'maxSeptJoursHeures', 'amplitudeMaxHeures']) t(`règle ${k} est un nombre`, typeof regles[k] === 'number' && regles[k] > 0);
 
 // Réglages cohérents
 const vus = new Set();

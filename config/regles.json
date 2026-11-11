@@ -1,0 +1,30 @@
+{
+  "valeurJourneeHeures": 7,
+  "quotiteParDefaut": 100,
+  "rttParAn": 15,
+  "caParAn": 25,
+  "periodeEstivale": {
+    "debut": "05-01",
+    "fin": "10-31"
+  },
+  "amplitudeMaxHeures": 12,
+  "dureeContinueMaxJourHeures": 9,
+  "dureeContinueMaxNuitHeures": 10,
+  "amplitudeServiceCoupeHeures": 10.5,
+  "vacationMinHeures": 3,
+  "reposQuotidienMinHeures": 12,
+  "reposHebdoMinHeures": 36,
+  "maxSeptJoursHeures": 48,
+  "reposQuinzaineMinJours": 4,
+  "nuitDebut": "21:00",
+  "nuitFin": "06:00",
+  "lundiPentecoteTravaille": true,
+  "delaiPrevenanceHeures": 48,
+  "aValider": [
+    "regles.valeurJourneeHeures",
+    "regles.rttParAn",
+    "regles.delaiPrevenanceHeures",
+    "codes.pause",
+    "contacts"
+  ]
+}

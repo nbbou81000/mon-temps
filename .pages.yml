@@ -1,0 +1,178 @@
+# Formulaires de Pages CMS (https://app.pagescms.org) :
+# permettent de tout modifier sans toucher au code.
+media:
+  input: images
+  output: /images
+  categories: [image]
+
+content:
+  - name: contenu
+    label: Appli, logo, contacts et réseaux
+    type: file
+    path: config/contenu.json
+    format: json
+    fields:
+      - name: nom
+        label: Nom de l'appli
+        type: string
+        required: true
+        description: Apparaît partout (appli, page d'accueil, icône installée)
+      - name: slogan
+        label: Phrase d'accroche
+        type: string
+      - name: syndicat
+        label: Nom du syndicat
+        type: string
+      - name: etablissement
+        label: Établissement
+        type: string
+      - name: couleur
+        label: Couleur principale (code hexadécimal)
+        type: string
+        pattern: ^#[0-9A-Fa-f]{6}$
+        description: Rouge CGT = #E30613
+      - name: logo
+        label: Logo affiché dans l'appli et sur la page d'accueil
+        type: image
+        description: PNG ou SVG, de préférence sur fond transparent
+      - name: icone
+        label: Icône de l'appli (écran d'accueil du téléphone)
+        type: image
+        description: Image carrée, 512 × 512 pixels ou plus
+      - name: domaine
+        label: Nom de domaine personnalisé (facultatif)
+        type: string
+        description: Ex. montemps.fr — laisser vide pour l'adresse gratuite github.io
+      - name: contacts
+        label: Contacts
+        type: object
+        fields:
+          - { name: mailGeneral, label: Mail général, type: string }
+          - { name: mailGreve, label: Mail pour les déclarations de grève (en copie), type: string }
+          - { name: mailSignalement, label: Mail pour les signalements confidentiels, type: string }
+          - { name: mailAdhesion, label: Mail pour les adhésions, type: string }
+          - { name: telephone, label: Téléphone, type: string }
+          - { name: adresse, label: Adresse postale, type: string }
+          - { name: local, label: Emplacement du local, type: string }
+          - { name: permanences, label: Horaires de permanence, type: string }
+      - name: reseaux
+        label: Site et réseaux sociaux (adresses complètes, commençant par https://)
+        type: object
+        fields:
+          - { name: site, label: Site internet, type: string }
+          - { name: facebook, label: Facebook, type: string }
+          - { name: instagram, label: Instagram, type: string }
+          - { name: whatsapp, label: WhatsApp (lien de chaîne ou de groupe), type: string }
+          - { name: tiktok, label: TikTok, type: string }
+          - { name: youtube, label: YouTube, type: string }
+          - { name: x, label: X (Twitter), type: string }
+          - { name: bluesky, label: Bluesky, type: string }
+          - { name: threads, label: Threads, type: string }
+          - { name: telegram, label: Telegram, type: string }
+      - name: actualites
+        label: Actualités
+        type: object
+        list: true
+        fields:
+          - name: date
+            label: Date
+            type: date
+            options: { format: yyyy-MM-dd }
+          - { name: titre, label: Titre, type: string, required: true }
+          - { name: texte, label: Texte, type: text }
+          - { name: image, label: Image (facultatif), type: image }
+          - { name: lien, label: Lien « En savoir plus » (facultatif), type: string }
+      - name: agenda
+        label: Agenda (AG, permanences, actions)
+        type: object
+        list: true
+        fields:
+          - name: date
+            label: Date
+            type: date
+            options: { format: yyyy-MM-dd }
+          - { name: titre, label: Titre, type: string, required: true }
+          - { name: lieu, label: Lieu et horaire, type: string }
+      - name: metiers
+        label: Métiers proposés
+        type: string
+        list: true
+      - name: droits
+        label: Fiches « Mes droits » supplémentaires
+        type: object
+        list: true
+        fields:
+          - { name: titre, label: Titre, type: string, required: true }
+          - { name: texte, label: Texte, type: text }
+          - { name: lien, label: Lien vers le texte officiel, type: string }
+          - { name: source, label: Nom de la source (ex. Décret 2002-8), type: string }
+      - name: responsablePublication
+        label: Responsable de la publication (mentions légales)
+        type: string
+      - name: adressePostale
+        label: Adresse du syndicat (mentions légales)
+        type: string
+
+  - name: codes
+    label: Codes horaires
+    type: file
+    path: config/codes.json
+    format: json
+    list: true
+    fields:
+      - { name: code, label: Code (tel qu'il apparaît sur le planning), type: string, required: true }
+      - { name: libelle, label: Libellé, type: string }
+      - name: type
+        label: Type
+        type: select
+        required: true
+        options:
+          values:
+            - { value: travail, label: Travail de jour }
+            - { value: nuit, label: Travail de nuit }
+            - { value: repos, label: Repos }
+            - { value: rtt, label: RTT }
+            - { value: conge, label: Congé }
+            - { value: recup, label: Récupération }
+            - { value: assimile, label: Absence comptée (maladie, formation…) }
+            - { value: greve, label: Grève }
+      - { name: debut, label: Début (HH:MM), type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+      - { name: fin, label: Fin (HH:MM), type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+      - { name: pauseMin, label: Pause non comptée (minutes), type: number }
+      - { name: debut2, label: Reprise (service coupé), type: string }
+      - { name: fin2, label: Fin de la reprise, type: string }
+
+  - name: regles
+    label: Règles de calcul
+    type: file
+    path: config/regles.json
+    format: json
+    fields:
+      - { name: valeurJourneeHeures, label: Valeur d'une journée (heures), type: number }
+      - { name: quotiteParDefaut, label: Quotité par défaut (%), type: number }
+      - { name: rttParAn, label: RTT par an (temps plein), type: number }
+      - { name: caParAn, label: Congés annuels par an (temps plein), type: number }
+      - name: periodeEstivale
+        label: Période estivale (MM-JJ)
+        type: object
+        fields:
+          - { name: debut, label: Début, type: string }
+          - { name: fin, label: Fin, type: string }
+      - { name: amplitudeMaxHeures, label: Amplitude maximale d'une journée (h), type: number }
+      - { name: dureeContinueMaxJourHeures, label: Durée continue max. équipe de jour (h), type: number }
+      - { name: dureeContinueMaxNuitHeures, label: Durée continue max. équipe de nuit (h), type: number }
+      - { name: amplitudeServiceCoupeHeures, label: Amplitude max. service coupé (h), type: number }
+      - { name: vacationMinHeures, label: Durée min. d'une vacation (h), type: number }
+      - { name: reposQuotidienMinHeures, label: Repos quotidien minimum (h), type: number }
+      - { name: reposHebdoMinHeures, label: Repos hebdomadaire minimum (h), type: number }
+      - { name: maxSeptJoursHeures, label: Maximum sur 7 jours (h), type: number }
+      - { name: reposQuinzaineMinJours, label: Jours de repos par quinzaine, type: number }
+      - { name: delaiPrevenanceHeures, label: Délai de prévenance d'un changement de planning (h), type: number }
+      - { name: nuitDebut, label: Début des heures de nuit (HH:MM), type: string }
+      - { name: nuitFin, label: Fin des heures de nuit (HH:MM), type: string }
+      - { name: lundiPentecoteTravaille, label: Lundi de Pentecôte = journée de solidarité travaillée, type: boolean }
+      - name: aValider
+        label: Valeurs encore provisoires (badge « provisoire » dans l'appli)
+        type: string
+        list: true
+        description: Retirer une ligne quand la valeur est confirmée

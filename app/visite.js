@@ -52,6 +52,7 @@ const ETAPES = [
   { route: /^preuves/, cible: 'onglets-preuves', titre: 'Garder une trace', texte: 'Rappels sur repos, changements de dernière minute, dépassements : tout est daté. Tu peux tout envoyer au syndicat d\'un geste.' },
   { route: /^preuves/, cible: 'nav-planning', titre: 'Retour au planning', texte: 'Touche « Planning ».', attendre: /^planning/ },
   { route: /^planning/, cible: 'sauvegarde', titre: 'Le bouclier : ta sauvegarde', texte: 'Tes données ne sont que sur ce téléphone. Vert : la sauvegarde est récente. Orange : pense à en refaire une. Une fois par mois suffit.' },
+  { route: /^planning/, cible: 'reglages', titre: 'Tes réglages', texte: 'Le bouton « Aa » change tout de suite le thème (clair ou sombre) et la taille du texte. L\'engrenage ouvre tous les réglages : ton poste, tes horaires, l\'affichage.' },
   { route: null, cible: null, titre: 'C\'est parti', texte: 'Fin de la visite. On quitte le mode essai : ton vrai planning, vide, t\'attend. Commence par « Remplir plusieurs jours d\'un coup ».', fin: true }
 ];
 

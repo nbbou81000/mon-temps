@@ -19,7 +19,13 @@ const P = {
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   livre: '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19V5M8 7h7"/>',
   partager: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
-  aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.1-1.5 2.5M12 17v.01"/>'
+  aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.1-1.5 2.5M12 17v.01"/>',
+  engrenage: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+  qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3M17.5 17.5v.01"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  actu: '<path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2M8 9h5M8 13h5"/>',
+  lieu: '<path d="M12 21s-7-6.2-7-11a7 7 0 1114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/>'
 };
 export const ic = (nom, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[nom] || ''}</svg>`;
 export const chevron = () => `<svg class="i chevron" viewBox="0 0 24 24" aria-hidden="true">${P.droite}</svg>`;
@@ -45,8 +51,8 @@ export function mailto(a, sujet, corps, cc) {
   return `mailto:${encodeURIComponent(a || '').replace(/%40/g, '@').replace(/%2C/g, ',')}?${p.join('&')}`;
 }
 
-export function navBas(actif) {
-  const l = (h, nom, icone, lib) => `<a href="${h}" ${actif === nom ? 'aria-current="page"' : ''} data-tour="nav-${nom}">${ic(icone)}${lib}</a>`;
+export function navBas(actif, nonLues = 0) {
+  const l = (h, nom, icone, lib) => `<a href="${h}" ${actif === nom ? 'aria-current="page"' : ''} data-tour="nav-${nom}">${ic(icone)}${lib}${nom === 'syndicat' && nonLues ? `<span class="point" aria-label="${nonLues} actualité${nonLues > 1 ? 's' : ''} non lue${nonLues > 1 ? 's' : ''}"></span>` : ''}</a>`;
   return `<nav class="bas" aria-label="Navigation principale">${l('#/planning', 'planning', 'calendrier', 'Planning')}${l('#/compteurs', 'compteurs', 'barres', 'Compteurs')}${l('#/preuves', 'preuves', 'preuves', 'Mes preuves')}${l('#/syndicat', 'syndicat', 'syndicat', 'Syndicat')}</nav>`;
 }
 
@@ -57,5 +63,25 @@ export function enteteRetour(titre, retour = '#/planning', etiquette = 'Retour')
 // Valeur de config marquée « à valider » ?
 export function aValider(cfg, chemin) { return Array.isArray(cfg.aValider) && cfg.aValider.some((c) => chemin === c || chemin.startsWith(c + '.')); }
 export const badgeProvisoire = (cfg, chemin) => aValider(cfg, chemin) ? '<span class="provisoire" title="Valeur provisoire, en attente du protocole local">provisoire</span>' : '';
+
+// Charge les 3 fichiers de réglages (modifiables depuis Pages CMS) et les rassemble.
+export async function chargerConfig(prefixe = '../') {
+  const lire = (f) => fetch(`${prefixe}config/${f}`, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(f); return r.json(); });
+  const [contenu, regles, codes] = await Promise.all([lire('contenu.json'), lire('regles.json'), lire('codes.json')]);
+  const { aValider, ...r } = regles;
+  return {
+    ...contenu, regles: r, aValider: aValider || [],
+    codes: (codes || []).filter((c) => c && c.code).map((c) => ({ ...c, code: String(c.code).trim() })),
+    contacts: contenu.contacts || {}, reseaux: contenu.reseaux || {},
+    metiers: (contenu.metiers || []).filter(Boolean), actualites: contenu.actualites || [], agenda: contenu.agenda || []
+  };
+}
+// Chemin d'une image envoyée depuis Pages CMS (« /images/x.png » ou « images/x.png »).
+export const media = (chemin, prefixe = '../') => chemin ? prefixe + String(chemin).replace(/^\/+/, '') : '';
+
+// Marque du syndicat : le logo s'il y en a un, sinon le carré rouge.
+export function marque(cfg, prefixe = '../') {
+  return cfg.logo ? `<img src="${esc(media(cfg.logo, prefixe))}" alt="" class="logo">` : '<i></i>';
+}
 
 export function emettre(nom, detail) { window.dispatchEvent(new CustomEvent('mt:' + nom, { detail })); }

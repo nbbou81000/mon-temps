@@ -235,3 +235,32 @@ nav.bas svg.i{width:1.375rem;height:1.375rem}
   .releve table{break-inside:auto}
   .releve tr{break-inside:avoid}
 }
+
+/* En-tête : logo, bouton Aa */
+.marque img.logo{height:1.75rem;width:auto;max-width:6rem;object-fit:contain;display:block}
+.btn-icone.aa{font-weight:800;font-size:1rem;letter-spacing:-.02em}
+nav.bas a{position:relative}
+nav.bas .point{position:absolute;top:4px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--rouge);box-shadow:0 0 0 2px var(--surface)}
+
+/* Panneau du bas */
+.voile-panneau{position:fixed;inset:0;background:rgba(18,16,14,.5);z-index:40}
+.panneau-bas{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--fond);border-radius:20px 20px 0 0;padding:.625rem 1rem calc(1.25rem + env(safe-area-inset-bottom));z-index:41;display:flex;flex-direction:column;gap:.75rem;animation:monte-bas .2s ease-out}
+.panneau-bas .poignee{width:40px;height:4px;border-radius:2px;background:var(--pointille);align-self:center}
+@keyframes monte-bas{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+
+/* Actualités et réseaux */
+.actus{display:flex;flex-direction:column;gap:.5rem}
+.actu{display:flex;gap:.75rem;background:var(--surface);border:1px solid var(--filet);border-radius:var(--r);padding:.75rem;text-decoration:none;color:var(--encre);align-items:flex-start}
+.actu img{width:4.5rem;height:4.5rem;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--filet2)}
+.actu-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.actu-t b{font-size:.9375rem;line-height:1.25}
+.actu-r{font-size:.8125rem;color:var(--encre2);line-height:1.4}
+.reseaux{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.5rem}
+.reseau{display:flex;flex-direction:column;align-items:center;gap:.375rem;padding:.75rem .25rem;background:var(--surface);border:1px solid var(--filet);border-radius:var(--r);text-decoration:none;color:var(--encre);font-size:.75rem;font-weight:700}
+
+/* Transfert par QR code */
+.etapes-simples{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:.375rem;font-size:.875rem;color:var(--encre2);line-height:1.45}
+.video-boite{position:relative;aspect-ratio:1;background:#000;border-radius:var(--r);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.video-boite video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.video-boite .viseur{position:absolute;inset:14%;border:3px solid rgba(255,255,255,.85);border-radius:16px;pointer-events:none}
+.video-boite .btn{position:relative;z-index:1}
