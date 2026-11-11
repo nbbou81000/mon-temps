@@ -4,6 +4,7 @@ import { S, sauver } from './etat.js';
 import { esc, ic, chevron, enteteRetour, mailto, badgeProvisoire } from './commun.js';
 import { barreHaut } from './entete.js';
 import { iconeReseau, NOMS } from './reseaux.js';
+import { carteElections } from './extras.js';
 
 const eur = (v, d = 2) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number.isFinite(v) ? v : 0);
 const num = (el, id) => { const v = Number(String(el.querySelector('#' + id).value).replace(',', '.')); return Number.isFinite(v) ? v : 0; };
@@ -23,12 +24,14 @@ export function vueOutils() {
     nav: 'outils',
     html: `${barreHaut()}<div class="ligne-titre"><h1>Outils</h1></div>
       <div class="page" style="margin-top:.875rem">
+        ${carteElections()}
         <p class="etiquette">Salaire</p>
         <ul class="liste">
           ${lien('#/salaire', 'euro', 'Mon salaire', 'Traitement, taux horaire, ce que mes saisies doivent rapporter')}
           ${lien('#/calc/maladie', 'coeur', 'Arrêt maladie : ce que je perds', 'Jour de carence et traitement à 90 %')}
           ${lien('#/calc/greve', 'megaphone', 'Grève : la retenue', 'Pour une heure, une demi-journée, un jour')}
           ${lien('#/calc/partiel', 'parts', 'Temps partiel : ce que je touche', '80 % payé 85,7 %, 90 % payé 91,4 %')}
+          ${lien('#/simuler', 'calendrier', 'Et si je pose… ?', 'Essayer des dates de congés avant de les demander')}
           ${lien('#/calc/heuressup', 'horloge', 'Heures supplémentaires', 'Ce que valent mes heures en plus')}
           ${lien('#/calc/dimanche', 'soleil', 'Nuit, dimanche, férié', 'Les indemnités pour une garde')}
         </ul>
@@ -37,6 +40,7 @@ export function vueOutils() {
           ${lien('#/courriers', 'mail', 'Modèles de courriers', 'Récupération, temps partiel, relevé d\'heures, alerte…')}
           ${lien('#/desiderata', 'calendrier', 'Désiderata de congés', 'Tes dates, mises en forme pour ton cadre')}
           ${lien('#/greve', 'megaphone', 'Déclarer mon intention de grève', 'Le mail à ton cadre, prêt à partir')}
+          ${lien('#/dossier', 'preuves', 'Dossier pour le syndicat', 'Bilan, alertes, rappels : un PDF prêt à envoyer')}
           ${lien('#/droits', 'livre', 'Mes droits', 'Temps de travail et repos, en clair')}
           ${lien(`#/releve/${M.aujourdhui().slice(0, 4)}`, 'imprimer', 'Mon relevé annuel', 'À imprimer ou à enregistrer en PDF')}
         </ul>
@@ -59,6 +63,8 @@ export function vueSalaire(p) {
           <h2>Mon traitement de base</h2>
           <div class="rangee"><label class="champ"><span>Indice majoré</span><input type="number" inputmode="numeric" id="im" min="300" max="1100" value="${pr.indiceMajore || ''}" placeholder="Ex. : 420"></label>
             <label class="champ"><span>Quotité</span><select id="q">${[100, 90, 80, 70, 60, 50].map((x) => `<option value="${x}" ${Number(pr.quotite || 100) === x ? 'selected' : ''}>${x} %</option>`).join('')}</select></label></div>
+          ${S.cfg.grilles.length ? `<div class="rangee"><label class="champ"><span>Mon grade</span><select id="grade"><option value="">Choisir…</option>${S.cfg.grilles.map((g, i) => `<option value="${i}">${esc(g.nom)}</option>`).join('')}</select></label>
+            <label class="champ"><span>Mon échelon</span><select id="ech" disabled><option value="">—</option></select></label></div>` : ''}
           ${note('L\'indice majoré est écrit en haut de ta fiche de paie (« IM » ou « indice »). Il dépend de ton grade et de ton échelon.')}
           <div id="res-base" class="res"></div>
         </section>
@@ -68,15 +74,20 @@ export function vueSalaire(p) {
           <div id="res-mois" class="res"></div>
           ${note('À comparer avec ta fiche de paie. Ces éléments sont souvent versés avec un ou deux mois de décalage.')}
         </section>
-        ${note(`Valeur du point d'indice : ${String(R.valeurPointMensuel).replace('.', ',')} € par mois. ${AVERT} Les primes (Ségur, prime de service, indemnité de sujétion…) ne sont pas comprises.`)}
+        ${note(`Valeur du point d'indice : ${String(R.valeurPointMensuel).replace('.', ',')} € par mois.${badgeProvisoire(S.cfg, 'baremes.point')} SMIC : ${eur(R.smicMensuel)} brut par mois à temps plein.${badgeProvisoire(S.cfg, 'baremes.smic')} ${AVERT} Les primes (Ségur, prime de service, indemnité de sujétion…) ne sont pas comprises.`)}
       </div>`,
     apres(el) {
       const e = M.elementsPaie(`${cle}-01`, M.iso(y, m, M.joursDansMois(y, m)), S.etat, S.cfg);
       const maj = () => {
         const im = num(el, 'im'), q = num(el, 'q') || 100;
-        const plein = im * R.valeurPointMensuel, brut = plein * partPayee(q), th = tauxHoraire(plein);
+        const imEff = Math.max(im, im >= 300 ? R.indiceMinimum : 0);
+        const plein = imEff * R.valeurPointMensuel, brut = plein * partPayee(q), th = tauxHoraire(plein);
+        const diff = R.smicMensuel ? Math.max(0, R.smicMensuel * partPayee(q) - brut) : 0;
         el.querySelector('#res-base').innerHTML = im >= 300
-          ? ligne('Traitement brut mensuel', eur(brut), true) + (q < 100 ? ligne('À temps plein', eur(plein)) : '') + ligne('Taux horaire brut', eur(th)) + ligne('Net approximatif (hors primes)', '≈ ' + eur(brut * 0.79, 0))
+          ? ligne('Traitement brut mensuel', eur(brut), true) + (q < 100 ? ligne('À temps plein', eur(plein)) : '') + ligne('Taux horaire brut', eur(th))
+            + (im < R.indiceMinimum ? note(`Ton indice est sous le minimum de traitement (indice ${R.indiceMinimum}) : c'est lui qui s'applique.${badgeProvisoire(S.cfg, 'baremes.indiceMin')}`) : '')
+            + (diff > 0.005 ? ligne(`Indemnité différentielle (SMIC)${badgeProvisoire(S.cfg, 'baremes.smic')}`, '≈ ' + eur(diff)) + note('Quand le traitement est inférieur au SMIC, une indemnité différentielle complète la différence. Elle disparaît quand le point d\'indice ou l\'indice remonte.') : '')
+            + ligne('Net approximatif (hors primes)', '≈ ' + eur((brut + diff) * 0.79, 0))
           : note('Renseigne ton indice pour voir ton traitement.');
         const n = e.nuit / 60 * th * R.majorationNuitPct / 100, d = e.djf / 480 * R.indemniteDimancheFerie8h, hs = e.dep / 60 * th * R.coefHeuresSup1;
         el.querySelector('#res-mois').innerHTML =
@@ -88,7 +99,13 @@ export function vueSalaire(p) {
       };
       const garder = () => { const im = num(el, 'im'); S.etat.profil = { ...profil(), indiceMajore: im >= 300 ? im : undefined, quotite: num(el, 'q') || 100 }; sauver(); };
       el.querySelector('#im').oninput = maj; el.querySelector('#q').onchange = () => { maj(); garder(); };
-      el.querySelector('#im').onchange = garder; maj();
+      el.querySelector('#im').onchange = garder;
+      const gr = el.querySelector('#grade'), ec = el.querySelector('#ech');
+      if (gr) {
+        gr.onchange = () => { const g = S.cfg.grilles[Number(gr.value)]; ec.disabled = !g; ec.innerHTML = g ? '<option value="">Choisir…</option>' + g.echelons.map((x, i) => `<option value="${x.indice}">Échelon ${i + 1} · indice ${x.indice}${x.duree ? ' · ' + esc(x.duree) : ''}</option>`).join('') : '<option value="">—</option>'; };
+        ec.onchange = () => { if (ec.value) { el.querySelector('#im').value = ec.value; maj(); garder(); } };
+      }
+      maj();
     }
   };
 }

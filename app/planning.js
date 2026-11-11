@@ -3,6 +3,7 @@ import * as M from './moteur.js';
 import { S, codes } from './etat.js';
 import { esc, ic } from './commun.js';
 import { barreHaut } from './entete.js';
+import { bandeaux } from './extras.js';
 
 export const moisVoisin = (y, m, k) => { const d = new Date(Date.UTC(y, m - 1 + k, 1)); return `${d.getUTCFullYear()}-${M.pad(d.getUTCMonth() + 1)}`; };
 export function moisDepuis(p) {
@@ -78,7 +79,7 @@ function vueMois(p) {
   }
   return {
     nav: 'planning',
-    html: `${barreHaut()}
+    html: `${barreHaut()}${bandeaux()}
       <div class="ligne-titre"><h1>${esc(Maj(M.MOIS[m - 1]))} <span class="pale">${y}</span></h1>${fleches(`#/planning/${moisVoisin(y, m, -1)}`, `#/planning/${moisVoisin(y, m, 1)}`, 'Mois')}</div>
       ${onglets('mois', refDans(debut, fin))}
       <div class="bandeau-stats">
@@ -112,7 +113,7 @@ function vueAnnee(p) {
   const rep = [...compte.entries()].sort((a, b) => b[1].n - a[1].n);
   return {
     nav: 'planning',
-    html: `${barreHaut()}
+    html: `${barreHaut()}${bandeaux()}
       <div class="ligne-titre"><h1>${y}</h1>${fleches(`#/planning/annee/${y - 1}`, `#/planning/annee/${y + 1}`, 'Année')}</div>
       ${onglets('annee', refDans(`${y}-01-01`, `${y}-12-31`))}
       <div class="annee">${mois}</div>
@@ -142,7 +143,7 @@ function vueSemaine(p) {
   const max = S.cfg.regles.maxSeptJoursHeures * 60;
   return {
     nav: 'planning',
-    html: `${barreHaut()}
+    html: `${barreHaut()}${bandeaux()}
       <div class="ligne-titre"><div><p class="etiquette">${esc(M.courte(lundi))} – ${esc(M.courte(dimanche))} ${dimanche.slice(0, 4)}</p><h1>Semaine <span class="pale">${M.numeroSemaine(lundi)}</span></h1></div>${fleches(`#/planning/semaine/${M.ajouterJours(lundi, -7)}`, `#/planning/semaine/${M.ajouterJours(lundi, 7)}`, 'Semaine')}</div>
       ${onglets('semaine', today >= lundi && today <= dimanche ? today : lundi)}
       <div class="bandeau-stats">
@@ -167,7 +168,7 @@ function vueJourDetail(p) {
   const ligne = (l, v) => `<li><div class="ligne"><span>${l}</span><b>${v}</b></div></li>`;
   return {
     nav: 'planning',
-    html: `${barreHaut()}
+    html: `${barreHaut()}${bandeaux()}
       <div class="ligne-titre"><div><p class="etiquette">${esc(M.JOURS[M.jourSemaine(d)])}${f ? ' · ' + esc(f) : ''}${d === today ? ' · aujourd\'hui' : ''}</p><h1>${Number(d.slice(8))} ${esc(M.MOIS[Number(d.slice(5, 7)) - 1])} <span class="pale">${d.slice(0, 4)}</span></h1></div>${fleches(`#/planning/jour/${M.ajouterJours(d, -1)}`, `#/planning/jour/${M.ajouterJours(d, 1)}`, 'Jour')}</div>
       ${onglets('jour', d)}
       <div class="page">

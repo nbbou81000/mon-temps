@@ -59,5 +59,14 @@ t('report automatique au 1er janvier', b27.reportAuto === true && b27.report ===
 t('semaine ISO', M.numeroSemaine('2026-11-11') === 46 && M.numeroSemaine('2027-01-01') === 53);
 t('teintes distinctes', new Set([...M.tousLesCodes(cfg, etat).values()].filter((c) => c.type === 'travail').slice(0, 3).map((c) => c.teinte)).size === 3);
 
+
+// Barèmes datés
+const bar = lire('baremes.json');
+const datesOk = (l) => Array.isArray(l) && l.length > 0 && l.every((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
+t('barèmes : point d\'indice daté', datesOk(bar.pointIndice) && bar.pointIndice.every((x) => x.valeur > 4 && x.valeur < 6));
+t('barèmes : SMIC daté et croissant', datesOk(bar.smic) && bar.smic.every((x, k, a) => k === 0 || x.horaire >= a[k - 1].horaire));
+t('barèmes : indice minimum daté', datesOk(bar.indiceMinimum) && bar.indiceMinimum.every((x) => x.indice >= 300 && x.indice <= 500));
+t('barèmes : grilles valides', (bar.grilles || []).every((g) => g.nom && Array.isArray(g.echelons) && g.echelons.every((e) => e.indice >= 300 && e.indice <= 1100)));
+const el = contenu.elections; t('élections : dates cohérentes', !el || (/^\d{4}-\d{2}-\d{2}$/.test(el.dateScrutin) && (!el.ouvertureVote || el.ouvertureVote <= el.dateScrutin)));
 console.log(`${ok} tests réussis, ${ko} en échec`);
 if (ko) process.exit(1);

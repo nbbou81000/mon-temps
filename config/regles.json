@@ -20,7 +20,6 @@
   "nuitFin": "06:00",
   "lundiPentecoteTravaille": true,
   "delaiPrevenanceHeures": 48,
-  "valeurPointMensuel": 4.92278,
   "heuresAnnuellesTauxHoraire": 1820,
   "majorationNuitPct": 25,
   "indemniteDimancheFerie8h": 60,
@@ -39,6 +38,7 @@
     "contacts",
     "regles.gardeEnfantJours",
     "regles.rhParAn",
-    "regles.coefHeuresSup1"
+    "regles.coefHeuresSup1",
+    "elections"
   ]
 }

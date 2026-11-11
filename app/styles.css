@@ -383,3 +383,19 @@ nav.bas{grid-template-columns:repeat(5,minmax(0,1fr));padding-left:4px;padding-r
 #appli.entree .jauge i{animation:remplit .5s ease-out both;transform-origin:left}
 @keyframes remplit{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .case.auj{box-shadow:0 0 0 3px color-mix(in srgb,var(--rouge) 18%,transparent)}
+
+/* ---------- Bandeaux, élections, cycles ---------- */
+.bandeaux { display: flex; flex-direction: column; gap: .5rem; }
+.bandeau { display: flex; align-items: center; gap: .75rem; padding: .75rem .875rem; border-radius: var(--r); background: var(--carte); border: 1px solid var(--filet); color: var(--encre); text-decoration: none; transition: transform .15s ease, box-shadow .15s ease; }
+.bandeau:active { transform: scale(.985); }
+.bandeau b { display: block; font-size: .9375rem; }
+.bandeau .sous { display: block; font-size: .8125rem; color: var(--encre2); }
+.bandeau-i { width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--filet2); display: grid; place-items: center; flex: none; }
+.bandeau.rouge { border-color: var(--rouge); }
+.bandeau.rouge .bandeau-i { background: var(--rouge); color: #fff; }
+.decompte { display: flex; flex-direction: column; gap: .25rem; }
+.gros-chiffre { margin: 0; font-size: 3.25rem; font-weight: 800; font-stretch: 80%; line-height: 1; letter-spacing: -.01em; }
+.decompte-mini { display: flex; align-items: center; justify-content: space-between; gap: .75rem; text-decoration: none; color: inherit; }
+.num-etape { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--rouge); color: #fff; font-size: .875rem; flex: none; }
+.pilules { display: flex; flex-wrap: wrap; gap: .375rem; min-height: 2rem; align-items: center; }
+@media print { .bandeaux { display: none; } }

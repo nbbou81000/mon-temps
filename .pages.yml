@@ -114,6 +114,40 @@ content:
           - { name: texte, label: Texte, type: text }
           - { name: lien, label: Lien vers le texte officiel, type: string }
           - { name: source, label: Nom de la source (ex. Décret 2002-8), type: string }
+      - name: elections
+        label: Élections professionnelles
+        type: object
+        fields:
+          - { name: actif, label: Afficher le bloc Élections, type: boolean }
+          - { name: titre, label: Titre, type: string }
+          - { name: dateScrutin, label: Jour du scrutin, type: date, options: { format: yyyy-MM-dd } }
+          - { name: ouvertureVote, label: Début de la période de vote (facultatif), type: date, options: { format: yyyy-MM-dd } }
+          - { name: afficherDepuisJours, label: Afficher le compte à rebours à partir de (jours avant le scrutin), type: number }
+          - { name: afficherJusquau, label: Masquer le bloc après cette date, type: date, options: { format: yyyy-MM-dd } }
+          - { name: texteIntro, label: Texte d'introduction, type: text }
+          - { name: modalites, label: Comment ça se passe dans l'établissement (mode de vote, lieux, horaires), type: text }
+          - name: etapes
+            label: Mode d'emploi, étape par étape
+            type: object
+            list: true
+            fields:
+              - { name: titre, label: Titre, type: string }
+              - { name: texte, label: Détail, type: text }
+          - { name: appel, label: Message du syndicat (facultatif), type: text }
+          - name: questions
+            label: Questions fréquentes
+            type: object
+            list: true
+            fields:
+              - { name: question, label: Question, type: string }
+              - { name: reponse, label: Réponse, type: text }
+          - { name: lienOfficiel, label: Lien officiel, type: string }
+      - name: statistiques
+        label: Statistiques d'installation (facultatif)
+        type: object
+        description: Compte seulement « première ouverture » et « appli installée », sans aucune donnée personnelle. Laisser vide pour désactiver.
+        fields:
+          - { name: goatcounter, label: Code GoatCounter (la partie avant .goatcounter.com), type: string }
       - name: responsablePublication
         label: Responsable de la publication (mentions légales)
         type: string
@@ -199,7 +233,6 @@ content:
       - { name: delaiPrevenanceHeures, label: Délai de prévenance d'un changement de planning (h), type: number }
       - { name: rhParAn, label: Repos hebdomadaires attendus par an, type: number }
       - { name: gardeEnfantJours, label: Jours de garde d'enfant par an (temps plein), type: number }
-      - { name: valeurPointMensuel, label: Valeur mensuelle du point d'indice (€), type: number }
       - { name: heuresAnnuellesTauxHoraire, label: Heures annuelles pour le taux horaire, type: number }
       - { name: majorationNuitPct, label: Majoration des heures de nuit (%), type: number }
       - { name: indemniteDimancheFerie8h, label: Indemnité dimanche et férié pour 8 h (€), type: number }
@@ -215,4 +248,61 @@ content:
         label: Valeurs encore provisoires (badge « provisoire » dans l'appli)
         type: string
         list: true
-        description: Retirer une ligne quand la valeur est confirmée
+        description: Retirer une ligne quand la valeur est confirmée. Clés possibles, par exemple regles.rttParAn, codes.pause, contacts, elections
+
+  - name: baremes
+    label: Barèmes (SMIC, point d'indice, grilles)
+    type: file
+    path: config/baremes.json
+    format: json
+    fields:
+      - name: pointIndice
+        label: Valeur du point d'indice
+        type: object
+        list: true
+        description: Pour un changement, ajouter une ligne avec la date d'effet. L'appli prend la dernière ligne dont la date est passée.
+        fields:
+          - { name: date, label: Date d'effet, type: date, options: { format: yyyy-MM-dd } }
+          - { name: valeur, label: Valeur mensuelle (€), type: number }
+          - { name: statut, label: Statut, type: select, options: { values: [{ value: officiel, label: Officiel }, { value: annonce, label: Annoncé (à confirmer) }] } }
+          - { name: source, label: Source (texte officiel), type: string }
+      - name: indiceMinimum
+        label: Indice minimum de traitement
+        type: object
+        list: true
+        fields:
+          - { name: date, label: Date d'effet, type: date, options: { format: yyyy-MM-dd } }
+          - { name: indice, label: Indice majoré minimum, type: number }
+          - { name: statut, label: Statut, type: select, options: { values: [{ value: officiel, label: Officiel }, { value: annonce, label: Annoncé (à confirmer) }] } }
+          - { name: source, label: Source, type: string }
+      - name: smic
+        label: SMIC
+        type: object
+        list: true
+        description: Ajouter une ligne à chaque revalorisation. Le mensuel est calculé (taux horaire × 151,67) si on ne le renseigne pas.
+        fields:
+          - { name: date, label: Date d'effet, type: date, options: { format: yyyy-MM-dd } }
+          - { name: horaire, label: SMIC horaire brut (€), type: number }
+          - { name: mensuel, label: SMIC mensuel brut, 35 h (€), type: number }
+          - { name: statut, label: Statut, type: select, options: { values: [{ value: officiel, label: Officiel }, { value: annonce, label: Annoncé (à confirmer) }] } }
+          - { name: source, label: Source, type: string }
+      - name: grilles
+        label: Grilles indiciaires (grades et échelons)
+        type: object
+        list: true
+        description: Un grade par ligne, avec ses échelons. Sert à choisir son indice dans Outils › Mon salaire.
+        fields:
+          - { name: nom, label: Grade (ex. Aide-soignant classe normale), type: string, required: true }
+          - { name: source, label: Source (texte officiel), type: string }
+          - name: echelons
+            label: Échelons, du premier au dernier
+            type: object
+            list: true
+            fields:
+              - { name: indice, label: Indice majoré, type: number }
+              - { name: duree, label: Durée (ex. 2 ans), type: string }
+      - name: aValider
+        label: Barèmes à confirmer (affichent « provisoire »)
+        type: string
+        list: true
+        description: Valeurs possibles, smic, grilles, point, indiceMin

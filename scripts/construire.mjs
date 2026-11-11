@@ -50,6 +50,14 @@ if (cfg.icone) {
   } else console.warn('Image d\'icône introuvable :', cfg.icone);
 }
 
+// Statistique d'installation facultative : on autorise l'envoi du petit signal seulement si un code est saisi.
+const gc = String((cfg.statistiques && cfg.statistiques.goatcounter) || '').trim().toLowerCase();
+if (/^[a-z0-9-]{2,40}$/.test(gc)) {
+  const p = path.join(sortie, 'app/index.html');
+  fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace("img-src 'self' data: blob:", `img-src 'self' data: blob: https://${gc}.goatcounter.com`));
+  console.log('Statistique d\'installation activée (GoatCounter).');
+}
+
 // Nom de domaine personnalisé
 const domaine = String(cfg.domaine || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 if (domaine) fs.writeFileSync(path.join(sortie, 'CNAME'), domaine + '\n');

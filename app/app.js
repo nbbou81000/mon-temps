@@ -11,6 +11,9 @@ import { vuePlanning, grilleMois, moisVoisin, moisDepuis } from './planning.js';
 import { vueCompteurs, vueCet } from './compteurs.js';
 import * as O from './outils.js';
 import * as K from './courriers.js';
+import * as X from './extras.js';
+import { vueVerification } from './verification.js';
+import { compterInstallations } from './statistiques.js';
 
 const racine = document.getElementById('appli');
 
@@ -30,8 +33,9 @@ async function demarrer() {
   St.protegerStockage();
   S.rendre = rendre;
   window.addEventListener('hashchange', () => rendre(true));
-  if (!S.etat.profil && !/^#\/(bienvenue|recevoir|sauvegarde|confidentialite|report)/.test(location.hash)) location.hash = '#/bienvenue';
+  if (!S.etat.profil && !/^#\/(bienvenue|recevoir|sauvegarde|confidentialite|report|verification|elections)/.test(location.hash)) location.hash = '#/bienvenue';
   else rendre(true);
+  compterInstallations(S);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('../sw.js').catch(() => {});
 }
 
@@ -43,7 +47,8 @@ const ROUTES = {
   syndicat: V.vueSyndicat, actu: V.vueActu, transfert: T.vueTransfert, recevoir: T.vueRecevoir, greve: V.vueGreve, desiderata: V.vueDesiderata, courriers: K.vueCourriers, signalement: K.vueSignalement, droits: V.vueDroits,
   outils: O.vueOutils, salaire: O.vueSalaire, calc: O.vueCalc, contact: O.vueContact, cet: vueCet,
   reglages: V.vueReglages, code: V.vueCode, report: V.vueReport, sauvegarde: V.vueSauvegarde, releve: V.vueReleve,
-  bienvenue: V.vueBienvenue, confidentialite: V.vueConfidentialite
+  bienvenue: V.vueBienvenue, confidentialite: V.vueConfidentialite,
+  elections: X.vueElections, cycle: X.vueCycle, simuler: X.vueSimuler, dossier: X.vueDossier, verification: vueVerification
 };
 
 let derniereRoute = '';
@@ -83,7 +88,8 @@ function vueRemplir(p) {
       <div class="ligne-titre" style="padding-top:.5rem"><h2 style="font-size:1.25rem;font-stretch:80%">${esc(M.MOIS[m - 1].replace(/^./, (c) => c.toUpperCase()))} ${y}</h2><div class="fleches"><a href="#/remplir/${moisVoisin(y, m, -1)}" aria-label="Mois précédent">${ic('gauche')}</a><a href="#/remplir/${moisVoisin(y, m, 1)}" aria-label="Mois suivant">${ic('droite')}</a></div></div>
       <div style="margin-top:.5rem">${grilleMois(y, m, { selection: R.sel })}</div>
       <div class="page" style="margin-top:.875rem"><button class="btn principal plein" id="appliquer" ${R.code && R.sel.size ? '' : 'disabled'}>${R.code ? `Mettre ${esc(R.code)} sur ${R.sel.size} jour${R.sel.size > 1 ? 's' : ''}` : 'Choisis d\'abord un code'}</button>
-      <p class="petit">Les jours remplis ici sont enregistrés comme « prévus ». Tu corriges ensuite seulement les journées qui ont changé.</p></div>`,
+      <p class="petit">Les jours remplis ici sont enregistrés comme « prévus ». Tu corriges ensuite seulement les journées qui ont changé.</p>
+      <a class="btn plein" href="#/cycle">${ic('parts')}Dérouler un cycle de travail</a></div>`,
     apres(el) {
       el.querySelectorAll('[data-code]').forEach((b) => b.onclick = () => { R.code = b.dataset.code; S.rendre(); });
       const bascule = (c) => { const d = c.dataset.date; R.sel.has(d) ? R.sel.delete(d) : R.sel.add(d); S.rendre(); };

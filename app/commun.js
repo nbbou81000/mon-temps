@@ -70,13 +70,24 @@ export function enteteRetour(titre, retour = '#/planning', etiquette = 'Retour')
 export function aValider(cfg, chemin) { return Array.isArray(cfg.aValider) && cfg.aValider.some((c) => chemin === c || chemin.startsWith(c + '.')); }
 export const badgeProvisoire = (cfg, chemin) => aValider(cfg, chemin) ? '<span class="provisoire" title="Valeur provisoire, en attente du protocole local">provisoire</span>' : '';
 
-// Charge les 3 fichiers de réglages (modifiables depuis Pages CMS) et les rassemble.
+// Charge les fichiers de réglages (modifiables depuis Pages CMS) et les rassemble.
+// Barèmes datés : on retient, pour chaque série, la dernière ligne dont la date est passée.
+export const valeurAu = (liste, date) => (liste || []).filter((x) => x && x.date && x.date <= date).sort((a, b) => a.date.localeCompare(b.date)).pop() || null;
 export async function chargerConfig(prefixe = '../') {
-  const lire = (f) => fetch(`${prefixe}config/${f}`, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(f); return r.json(); });
-  const [contenu, regles, codes] = await Promise.all([lire('contenu.json'), lire('regles.json'), lire('codes.json')]);
+  const lire = (f, dflt) => fetch(`${prefixe}config/${f}`, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(f); return r.json(); }).catch((e) => { if (dflt !== undefined) return dflt; throw e; });
+  const [contenu, regles, codes, baremes] = await Promise.all([lire('contenu.json'), lire('regles.json'), lire('codes.json'), lire('baremes.json', {})]);
   const { aValider, ...r } = regles;
+  const aujourdhui = new Date().toLocaleDateString('sv-SE');
+  const pt = valeurAu(baremes.pointIndice, aujourdhui), im = valeurAu(baremes.indiceMinimum, aujourdhui), sm = valeurAu(baremes.smic, aujourdhui);
+  r.valeurPointMensuel = pt ? Number(pt.valeur) : 4.92278;
+  r.indiceMinimum = im ? Number(im.indice) : 366;
+  r.smicHoraire = sm ? Number(sm.horaire) : 0;
+  r.smicMensuel = sm ? Number(sm.mensuel) || Math.round(sm.horaire * 151.67 * 100) / 100 : 0;
+  const valider = [...(aValider || [])];
+  for (const [cle, ligne] of [['point', pt], ['indiceMin', im], ['smic', sm]]) if (ligne && ligne.statut && ligne.statut !== 'officiel') valider.push('baremes.' + cle);
+  for (const c of baremes.aValider || []) valider.push('baremes.' + c);
   return {
-    ...contenu, regles: r, aValider: aValider || [],
+    ...contenu, regles: r, aValider: valider, baremes: { ...baremes, actuels: { pt, im, sm } }, grilles: (baremes.grilles || []).filter((g) => g && g.nom),
     codes: (codes || []).filter((c) => c && c.code).map((c) => ({ ...c, code: String(c.code).trim() })),
     contacts: contenu.contacts || {}, reseaux: contenu.reseaux || {},
     metiers: (contenu.metiers || []).filter(Boolean), actualites: contenu.actualites || [], agenda: contenu.agenda || []

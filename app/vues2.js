@@ -1,4 +1,5 @@
 // Mon Temps — écrans Syndicat, Réglages, Sauvegarde, Relevé, Accueil.
+import { carteElections } from './extras.js';
 import * as M from './moteur.js';
 import * as St from './stockage.js';
 import { S, codes, sauver, aller, joursDepuisSauvegarde, appliquerAffichage } from './etat.js';
@@ -34,6 +35,7 @@ export function vueSyndicat() {
       <div class="page" style="margin-top:.875rem">
         ${actus.length ? `<p class="etiquette">Actualités</p><div class="actus">${actus.slice(0, 5).map((x) => `<a class="actu" href="#/actu/${x.i}">${x.image ? `<img src="${esc(media(x.image))}" alt="" loading="lazy">` : ''}<span class="actu-t"><span class="petit">${x.date ? esc(M.courte(x.date)) : ''}${x.date && x.date > vues ? ' · <b style="color:var(--rouge-texte)">nouveau</b>' : ''}</span><b>${esc(x.titre)}</b>${x.texte ? `<span class="actu-r">${esc(String(x.texte).slice(0, 110))}${String(x.texte).length > 110 ? '…' : ''}</span>` : ''}</span></a>`).join('')}</div>` : ''}
         ${rdv.length ? `<p class="etiquette">À venir</p>${rdv.slice(0, 3).map((x) => `<section class="carte sombre" style="display:flex;align-items:center;gap:.875rem"><div class="date-bloc" style="border-color:#5A544D"><b>${Number(x.date.slice(8))}</b><span style="color:var(--carte-sombre-texte)">${esc(M.MOIS_COURTS[Number(x.date.slice(5, 7)) - 1].replace('.', ''))}</span></div><div><b style="display:block;font-size:.9375rem">${esc(x.titre)}</b>${x.lieu ? `<span class="petit">${esc(x.lieu)}</span>` : ''}</div></section>`).join('')}` : ''}
+        ${carteElections()}
         <p class="etiquette" style="margin-top:.25rem">Agir</p>
         <ul class="liste">
           ${lien('#/greve', 'Déclarer mon intention de grève', 'Le mail à ton cadre, prêt à partir')}
@@ -193,6 +195,7 @@ export function vueReglages() {
         <ul class="liste">
           <li><a class="lien" href="#/sauvegarde"><span>Sauvegarde et transfert</span><span class="val" style="color:${js === null || js > 30 ? 'var(--ambre)' : 'var(--sourdine)'};font-weight:700">${js === null ? 'Jamais faite' : js === 0 ? 'Aujourd\'hui' : `Il y a ${js} j`}${chevron()}</span></a></li>
           <li><button class="lien" id="visite"><span>Revoir la visite guidée</span>${chevron()}</button></li>
+          <li><a class="lien" href="#/verification"><span>Vérifier les chiffres de l'appli</span>${chevron()}</a></li>
           <li><a class="lien" href="#/confidentialite"><span>Confidentialité</span>${chevron()}</a></li>
           <li><a class="lien" href="../"><span>Page d'accueil de l'appli</span>${chevron()}</a></li>
         </ul>
@@ -504,7 +507,7 @@ export function vueConfidentialite() {
     html: `${enteteRetour('Confidentialité', '#/reglages')}
       <div class="page" style="margin-top:.75rem">
         <div class="carte"><h2>Ce que l'appli sait de toi</h2><p class="texte" style="margin-top:.375rem">Ce que tu saisis : ton planning, tes notes, ton métier. Tout est enregistré uniquement dans ce téléphone (ou cet ordinateur).</p></div>
-        <div class="carte"><h2>Ce qui est envoyé</h2><p class="texte" style="margin-top:.375rem">Rien. L'appli n'a ni compte, ni serveur, ni statistiques de visite, ni publicité, ni cookies. Le syndicat ne voit pas ton planning.</p></div>
+        <div class="carte"><h2>Ce qui est envoyé</h2><p class="texte" style="margin-top:.375rem">Rien. L'appli n'a ni compte, ni serveur, ni statistiques de visite, ni publicité, ni cookies. Le syndicat ne voit pas ton planning.${c.statistiques && c.statistiques.goatcounter ? ' Une seule exception : pour savoir combien d\'appareils utilisent l\'appli, un simple signal « première ouverture » et « appli installée » est envoyé une seule fois, sans aucune information sur toi, ton planning ou ton appareil.' : ''}</p></div>
         <div class="carte"><h2>Quand tu envoies un mail</h2><p class="texte" style="margin-top:.375rem">Les mails (grève, signalement, courriers) sont seulement préparés : ils s'ouvrent dans ta propre messagerie, et c'est toi qui décides de les envoyer.</p></div>
         <div class="carte"><h2>Tes sauvegardes</h2><p class="texte" style="margin-top:.375rem">Elles sont chiffrées avec ton mot de passe (AES-256). Sans lui, le fichier est illisible, y compris pour nous.</p></div>
         <div class="carte"><h2>Effacer</h2><p class="texte" style="margin-top:.375rem">Réglages › Effacer toutes mes données supprime tout de cet appareil, immédiatement.</p></div>

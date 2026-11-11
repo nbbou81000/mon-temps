@@ -30,6 +30,19 @@ Si une saisie casse quelque chose, la publication s'arrête et **l'ancienne vers
 
 ---
 
+## Mettre à jour les chiffres officiels (SMIC, point d'indice, grilles)
+
+Dans Pages CMS, ouvrir **Barèmes**. Chaque série est une liste datée : pour une revalorisation, **ajouter une ligne** avec sa date d'effet. L'appli prend toujours la dernière ligne dont la date est passée, donc une valeur annoncée peut être saisie à l'avance : elle s'applique toute seule le jour J. Tant que le statut est « Annoncé », l'appli affiche « provisoire ».
+Le SMIC du 1er décembre 2026 (environ 12,50 € brut de l'heure, annoncé le 9 novembre) est déjà prévu : il faudra seulement remplacer le montant par celui du décret, et passer le statut sur « Officiel ».
+
+## Vérifier tous les chiffres
+
+Dans l'appli : Réglages › **Vérifier les chiffres de l'appli**. La page liste chaque valeur avec sa source et son statut. Elle s'imprime et s'envoie par mail, pour que les déléguées et délégués puissent tout relire.
+
+## Statistique d'installation (facultative)
+
+Désactivée par défaut. Pour l'activer : créer un compte gratuit sur goatcounter.com, puis saisir son code dans Pages CMS › Appli › **Statistiques d'installation**. L'appli envoie alors, une seule fois par appareil, deux signaux sans aucune donnée : « première ouverture » et « appli installée ». La page Confidentialité de l'appli l'annonce toute seule.
+
 ## Publication anonyme (recommandée)
 
 But : que le site public ne mène jamais au compte GitHub personnel de son auteur.
