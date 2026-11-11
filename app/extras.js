@@ -7,6 +7,29 @@ const jourNum = (d) => M.jourNum(d);
 const pl = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
 const lien = (h, t, s) => `<li><a class="lien" href="${h}"><span>${t}<span class="sous">${s}</span></span>${chevron()}</a></li>`;
 
+// ---------- Date de la prochaine paie ----------
+// Règle par défaut : dernier jour ouvré du mois, moins N jours ; si ce jour tombe un week-end ou un férié, on recule.
+const ouvre = (d) => M.jourSemaine(d) < 5 && !M.nomFerie(d);
+function datePaie(mois, p) {
+  const ex = (p.exceptions || []).find((x) => x && x.mois === mois && x.date); if (ex) return ex.date;
+  const [y, m] = mois.split('-').map(Number); let d = M.iso(y, m, M.joursDansMois(y, m));
+  while (!ouvre(d)) d = M.ajouterJours(d, -1);
+  d = M.ajouterJours(d, -(Number(p.decalageJours) >= 0 ? Number(p.decalageJours) : 2));
+  while (!ouvre(d)) d = M.ajouterJours(d, -1);
+  return d;
+}
+export function prochainePaie() {
+  const p = S.cfg.paie; if (!p || p.actif === false) return null;
+  const t = M.aujourdhui(); const [y, m] = t.split('-').map(Number);
+  for (let k = 0; k < 3; k++) { const dt = new Date(Date.UTC(y, m - 1 + k, 1)); const mois = `${dt.getUTCFullYear()}-${M.pad(dt.getUTCMonth() + 1)}`; const d = datePaie(mois, p); if (d >= t) return { date: d, jours: jourNum(d) - jourNum(t), note: p.note || '' }; }
+  return null;
+}
+export function textePaie() {
+  const x = prochainePaie(); if (!x) return '';
+  return `Prochaine paie : ${M.longue(x.date).replace(/ \d{4}$/, '')}${x.jours === 0 ? ' (aujourd\'hui)' : x.jours === 1 ? ' (demain)' : ` (dans ${x.jours} jours)`}`;
+}
+export const lignePaie = () => { const t = textePaie(); return t ? `<p class="petit ligne-paie">${ic('euro')}<span>${esc(t)}${badgeProvisoire(S.cfg, 'paie')}</span></p>` : ''; };
+
 // ---------- Élections ----------
 const elec = () => { const e = S.cfg.elections; return e && e.actif !== false && e.dateScrutin ? e : null; };
 export function joursAvantScrutin(e = elec()) { return e ? jourNum(e.dateScrutin) - jourNum(M.aujourdhui()) : null; }

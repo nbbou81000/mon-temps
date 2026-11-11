@@ -3,7 +3,7 @@ import * as M from './moteur.js';
 import { S, codes } from './etat.js';
 import { esc, ic } from './commun.js';
 import { barreHaut } from './entete.js';
-import { bandeaux } from './extras.js';
+import { bandeaux, lignePaie } from './extras.js';
 
 export const moisVoisin = (y, m, k) => { const d = new Date(Date.UTC(y, m - 1 + k, 1)); return `${d.getUTCFullYear()}-${M.pad(d.getUTCMonth() + 1)}`; };
 export function moisDepuis(p) {
@@ -90,6 +90,7 @@ function vueMois(p) {
       ${grilleMois(y, m)}
       <div style="padding:0 1rem;margin-top:-.25rem"><div class="legende"><span><i class="plein"></i>Fait</span><span><i class="tirets"></i>Prévu</span><span><u>11</u>Férié</span><span><b style="color:var(--rouge-texte)">+</b>Dépassement</span><span><i style="width:6px;height:6px;border-radius:50%;background:var(--rouge);border:0"></i>Alerte</span></div></div>
       ${carteJour}
+      <div style="padding:0 1rem">${lignePaie()}</div>
       <div style="padding:0 1rem"><a class="btn plein" href="#/remplir/${y}-${M.pad(m)}" data-tour="remplir">${ic('calendrier')}Remplir plusieurs jours d'un coup</a></div>`
   };
 }

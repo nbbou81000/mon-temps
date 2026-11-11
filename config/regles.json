@@ -39,6 +39,7 @@
     "regles.gardeEnfantJours",
     "regles.rhParAn",
     "regles.coefHeuresSup1",
-    "elections"
+    "elections",
+    "paie"
   ]
 }

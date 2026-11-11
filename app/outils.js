@@ -4,7 +4,7 @@ import { S, sauver } from './etat.js';
 import { esc, ic, chevron, enteteRetour, mailto, badgeProvisoire } from './commun.js';
 import { barreHaut } from './entete.js';
 import { iconeReseau, NOMS } from './reseaux.js';
-import { carteElections } from './extras.js';
+import { carteElections, lignePaie } from './extras.js';
 
 const eur = (v, d = 2) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: d, maximumFractionDigits: d }).format(Number.isFinite(v) ? v : 0);
 const num = (el, id) => { const v = Number(String(el.querySelector('#' + id).value).replace(',', '.')); return Number.isFinite(v) ? v : 0; };
@@ -59,6 +59,7 @@ export function vueSalaire(p) {
   return {
     html: `${enteteRetour('Mon salaire', '#/outils')}
       <div class="page" style="margin-top:.75rem">
+        ${lignePaie()}
         <section class="carte" style="display:flex;flex-direction:column;gap:.75rem">
           <h2>Mon traitement de base</h2>
           <div class="rangee"><label class="champ"><span>Indice majoré</span><input type="number" inputmode="numeric" id="im" min="300" max="1100" value="${pr.indiceMajore || ''}" placeholder="Ex. : 420"></label>

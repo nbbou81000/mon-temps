@@ -142,6 +142,21 @@ content:
               - { name: question, label: Question, type: string }
               - { name: reponse, label: Réponse, type: text }
           - { name: lienOfficiel, label: Lien officiel, type: string }
+      - name: paie
+        label: Date de paie
+        type: object
+        description: Règle utilisée par défaut, fin du dernier jour ouvré du mois moins 2 jours. On ajoute une exception quand le service de paie annonce une autre date (décembre, par exemple).
+        fields:
+          - { name: actif, label: Afficher la date de la prochaine paie, type: boolean }
+          - { name: decalageJours, label: Jours avant le dernier jour ouvré du mois, type: number }
+          - name: exceptions
+            label: Dates particulières
+            type: object
+            list: true
+            fields:
+              - { name: mois, label: Mois concerné (AAAA-MM, ex. 2026-12), type: string, pattern: '^\d{4}-\d{2}$' }
+              - { name: date, label: Date de paie, type: date, options: { format: yyyy-MM-dd } }
+          - { name: note, label: Précision affichée sous la date, type: text }
       - name: statistiques
         label: Statistiques d'installation (facultatif)
         type: object
