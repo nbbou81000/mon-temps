@@ -1,0 +1,41 @@
+name: Publier le site
+
+# Se lance tout seul à chaque modification du dépôt,
+# ou à la main depuis l'onglet « Actions » (bouton « Run workflow »).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Vérifier le fichier de réglages
+        run: node -e "JSON.parse(require('fs').readFileSync('config/etablissement.json','utf8')); console.log('Réglages valides')"
+      - name: Tester le moteur de calcul
+        run: node scripts/tester.mjs
+      - name: Préparer le site
+        run: node scripts/construire.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploiement
+        uses: actions/deploy-pages@v4

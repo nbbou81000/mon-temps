@@ -1,0 +1,61 @@
+// Outils partagés par les écrans.
+export const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const P = {
+  calendrier: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  barres: '<path d="M5 20V11M12 20V4M19 20v-6"/>',
+  preuves: '<path d="M5 4h11l3 3v13H5z"/><path d="M9 10h6M9 14h6"/>',
+  syndicat: '<path d="M4 10v4h3l6 4V6L7 10z"/><path d="M17 9a4 4 0 010 6"/>',
+  reglages: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  bouclier: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+  bouclierAlerte: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z"/><path d="M12 8v5M12 16v.01"/>',
+  gauche: '<path d="M15 6l-6 6 6 6"/>', droite: '<path d="M9 6l6 6-6 6"/>',
+  fermer: '<path d="M6 6l12 12M18 6L6 18"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+  alerte: '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/>',
+  coche: '<path d="M5 12l5 5 9-10"/>', telecharger: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  cadenas: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  horloge: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', imprimer: '<path d="M7 9V4h10v5M7 17H5a1 1 0 01-1-1v-5a2 2 0 012-2h12a2 2 0 012 2v5a1 1 0 01-1 1h-2"/><path d="M7 14h10v6H7z"/>',
+  telephone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  livre: '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19V5M8 7h7"/>',
+  partager: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
+  aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .6-1.5 1.1-1.5 2.5M12 17v.01"/>'
+};
+export const ic = (nom, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[nom] || ''}</svg>`;
+export const chevron = () => `<svg class="i chevron" viewBox="0 0 24 24" aria-hidden="true">${P.droite}</svg>`;
+
+export function toast(msg, ms = 2600) {
+  document.querySelectorAll('.toast').forEach((t) => t.remove());
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), ms);
+}
+
+export function telechargerFichier(nom, contenu, type = 'application/octet-stream') {
+  const blob = new Blob([contenu], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return blob;
+}
+
+export function mailto(a, sujet, corps, cc) {
+  const p = [];
+  if (sujet) p.push('subject=' + encodeURIComponent(sujet));
+  if (cc) p.push('cc=' + encodeURIComponent(cc));
+  if (corps) p.push('body=' + encodeURIComponent(corps));
+  return `mailto:${encodeURIComponent(a || '').replace(/%40/g, '@').replace(/%2C/g, ',')}?${p.join('&')}`;
+}
+
+export function navBas(actif) {
+  const l = (h, nom, icone, lib) => `<a href="${h}" ${actif === nom ? 'aria-current="page"' : ''} data-tour="nav-${nom}">${ic(icone)}${lib}</a>`;
+  return `<nav class="bas" aria-label="Navigation principale">${l('#/planning', 'planning', 'calendrier', 'Planning')}${l('#/compteurs', 'compteurs', 'barres', 'Compteurs')}${l('#/preuves', 'preuves', 'preuves', 'Mes preuves')}${l('#/syndicat', 'syndicat', 'syndicat', 'Syndicat')}</nav>`;
+}
+
+export function enteteRetour(titre, retour = '#/planning', etiquette = 'Retour') {
+  return `<header class="retour"><a class="btn-icone" href="${retour}" aria-label="${esc(etiquette)}">${ic('gauche')}</a><h1>${esc(titre)}</h1></header>`;
+}
+
+// Valeur de config marquée « à valider » ?
+export function aValider(cfg, chemin) { return Array.isArray(cfg.aValider) && cfg.aValider.some((c) => chemin === c || chemin.startsWith(c + '.')); }
+export const badgeProvisoire = (cfg, chemin) => aValider(cfg, chemin) ? '<span class="provisoire" title="Valeur provisoire, en attente du protocole local">provisoire</span>' : '';
+
+export function emettre(nom, detail) { window.dispatchEvent(new CustomEvent('mt:' + nom, { detail })); }

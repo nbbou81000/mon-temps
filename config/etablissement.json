@@ -1,0 +1,79 @@
+{
+  "_lisezMoi": "Fichier de réglages de l'appli. Modifiable depuis le site GitHub (icône crayon). Les valeurs marquées dans 'aValider' sont provisoires et affichées comme telles dans l'appli.",
+
+  "nom": "Mon Temps",
+  "slogan": "Ton temps de travail, compté par toi.",
+  "etablissement": "CH d'Albi",
+  "syndicat": "CGT CH d'Albi",
+  "couleur": "#E30613",
+
+  "regles": {
+    "valeurJourneeHeures": 7,
+    "quotiteParDefaut": 100,
+    "rttParAn": 15,
+    "caParAn": 25,
+    "periodeEstivale": { "debut": "05-01", "fin": "10-31" },
+    "amplitudeMaxHeures": 12,
+    "dureeContinueMaxJourHeures": 9,
+    "dureeContinueMaxNuitHeures": 10,
+    "amplitudeServiceCoupeHeures": 10.5,
+    "vacationMinHeures": 3,
+    "reposQuotidienMinHeures": 12,
+    "reposHebdoMinHeures": 36,
+    "maxSeptJoursHeures": 48,
+    "reposQuinzaineMinJours": 4,
+    "nuitDebut": "21:00",
+    "nuitFin": "06:00",
+    "lundiPentecoteTravaille": true
+  },
+
+  "aValider": [
+    "regles.valeurJourneeHeures",
+    "regles.rttParAn",
+    "codes.pause",
+    "contacts"
+  ],
+
+  "codes": [
+    { "code": "M41", "libelle": "Matin 41", "type": "travail", "debut": "08:00", "fin": "16:18", "pauseMin": 30 },
+    { "code": "M52", "libelle": "Matin 52", "type": "travail", "debut": "08:42", "fin": "17:00", "pauseMin": 30 },
+    { "code": "J38", "libelle": "Journée 38", "type": "travail", "debut": "09:42", "fin": "18:00", "pauseMin": 30 },
+    { "code": "RH", "libelle": "Repos hebdomadaire", "type": "repos" },
+    { "code": "RF", "libelle": "Repos férié", "type": "repos" },
+    { "code": "RTT", "libelle": "Réduction du temps de travail", "type": "rtt" },
+    { "code": "CA", "libelle": "Congé annuel", "type": "conge" },
+    { "code": "CF-1", "libelle": "Congé de fractionnement", "type": "conge" },
+    { "code": "HS", "libelle": "Congé hors saison", "type": "conge" },
+    { "code": "REC", "libelle": "Récupération d'heures", "type": "recup" },
+    { "code": "TPPO", "libelle": "Temps partiel", "type": "repos" },
+    { "code": "MAL", "libelle": "Maladie", "type": "assimile" },
+    { "code": "AT", "libelle": "Accident du travail", "type": "assimile" },
+    { "code": "FOR", "libelle": "Formation", "type": "assimile" },
+    { "code": "SYN", "libelle": "Activité syndicale", "type": "assimile" },
+    { "code": "GRE", "libelle": "Grève", "type": "greve" }
+  ],
+
+  "metiers": [
+    "AS", "IDE", "ASH", "AMA", "Adjoint administratif", "AEQ", "OPQ", "AP", "Sage-femme", "TSH",
+    "Puéricultrice", "Technicien de laboratoire", "IADE", "IBODE", "Préparateur en pharmacie",
+    "Manipulateur radio", "Ambulancier", "Kinésithérapeute", "Cadre", "Autre"
+  ],
+
+  "contacts": {
+    "mailGeneral": "",
+    "mailGreve": "",
+    "mailSignalement": "",
+    "mailAdhesion": "",
+    "telephone": "",
+    "local": "",
+    "permanences": "",
+    "site": "",
+    "facebook": "",
+    "instagram": ""
+  },
+
+  "agenda": [],
+
+  "responsablePublication": "",
+  "adressePostale": ""
+}
