@@ -362,3 +362,208 @@ content:
         label: Autres primes à confirmer (identifiants)
         type: string
         list: true
+
+  # ---- Textes : tout texte affiché peut être changé ici ----
+
+  - name: textes-accueil-site
+    label: "Textes · Page d'accueil du site"
+    type: file
+    path: config/textes-accueil-site.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-mentions
+    label: "Textes · Mentions légales"
+    type: file
+    path: config/textes-mentions.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-bienvenue-visite
+    label: "Textes · Bienvenue et visite guidée"
+    type: file
+    path: config/textes-bienvenue-visite.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-planning
+    label: "Textes · Planning, journée, remplissage, cycles"
+    type: file
+    path: config/textes-planning.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-compteurs
+    label: "Textes · Compteurs et preuves"
+    type: file
+    path: config/textes-compteurs.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-outils-salaire
+    label: "Textes · Outils, salaire, calculs, simulateur"
+    type: file
+    path: config/textes-outils-salaire.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-syndicat
+    label: "Textes · Syndicat, élections, droits, contact, actus"
+    type: file
+    path: config/textes-syndicat.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-courriers
+    label: "Textes · Courriers et signalements"
+    type: file
+    path: config/textes-courriers.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: textes-reglages
+    label: "Textes · Réglages, sauvegarde, confidentialité, vérification"
+    type: file
+    path: config/textes-reglages.json
+    format: json
+    fields:
+      - name: textes
+        label: Textes
+        type: object
+        list: true
+        description: "Change seulement la case Texte (garde les mots entre {accolades} et les signes comme « + »). Ne modifie pas la Clé. Le même texte est remplacé partout où il apparaît."
+        fields:
+          - name: texte
+            label: Texte
+            type: text
+          - name: cle
+            label: Clé (ne pas modifier)
+            type: string
+
+  - name: courriers
+    label: Modèles de courriers
+    type: file
+    path: config/courriers.json
+    format: json
+    fields:
+      - name: formule
+        label: Formule de politesse
+        type: string
+      - name: modeles
+        label: Modèles
+        type: object
+        list: true
+        description: "Dans le texte : {dates} {heures} {periode} {delai} {quotite} {jours} {precisions} {service} sont remplacés par ce que l'agent saisit. [[ phrase avec {x} ]] disparaît si {x} est vide. [[ A | B ]] affiche B si A est vide."
+        fields:
+          - name: titre
+            label: Titre
+            type: string
+          - name: groupe
+            label: Groupe
+            type: string
+          - name: id
+            label: Identifiant (ne pas modifier)
+            type: string
+          - name: champs
+            label: Champs demandés à l'agent
+            type: string
+            list: true
+          - name: texte
+            label: Texte du courrier
+            type: text

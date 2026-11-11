@@ -71,5 +71,13 @@ const el = contenu.elections; t('élections : dates cohérentes', !el || (/^\d{4
 const pr = lire('primes.json'); const idsP = new Set();
 t('primes : liste', Array.isArray(pr.liste) && pr.liste.length > 0);
 for (const x of pr.liste) { t(`prime ${x.id} : identifiant unique`, x.id && !idsP.has(x.id)); idsP.add(x.id); t(`prime ${x.id} : mode connu`, ['points', 'pourcentage', 'montant', 'points-saisis', 'saisie'].includes(x.mode)); t(`prime ${x.id} : valeur numérique`, typeof x.valeur === 'number' && x.valeur >= 0); }
+
+// Textes modifiables et courriers
+const tOr = lire('textes-origine.json'); const tIdx = lire('textes-index.json');
+t('textes : index non vide', Array.isArray(tIdx.fichiers) && tIdx.fichiers.length > 0);
+for (const f of tIdx.fichiers) { const j = lire(f); t(`${f} : clés connues et textes non vides`, Array.isArray(j.textes) && j.textes.every((e) => typeof e.texte === 'string' && e.texte.trim() && tOr[e.cle] !== undefined)); }
+const cou = lire('courriers.json'); const idsC = new Set();
+t('courriers : modèles', Array.isArray(cou.modeles) && cou.modeles.length > 0 && typeof cou.formule === 'string');
+for (const m of cou.modeles) { t(`courrier ${m.id} : complet et unique`, m.id && m.titre && m.texte && !idsC.has(m.id)); idsC.add(m.id); }
 console.log(`${ok} tests réussis, ${ko} en échec`);
 if (ko) process.exit(1);

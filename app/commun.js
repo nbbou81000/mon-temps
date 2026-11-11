@@ -75,7 +75,7 @@ export const badgeProvisoire = (cfg, chemin) => aValider(cfg, chemin) ? '<span c
 export const valeurAu = (liste, date) => (liste || []).filter((x) => x && x.date && x.date <= date).sort((a, b) => a.date.localeCompare(b.date)).pop() || null;
 export async function chargerConfig(prefixe = '../') {
   const lire = (f, dflt) => fetch(`${prefixe}config/${f}`, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(f); return r.json(); }).catch((e) => { if (dflt !== undefined) return dflt; throw e; });
-  const [contenu, regles, codes, baremes, primes] = await Promise.all([lire('contenu.json'), lire('regles.json'), lire('codes.json'), lire('baremes.json', {}), lire('primes.json', { liste: [] })]);
+  const [contenu, regles, codes, baremes, primes, courriers] = await Promise.all([lire('contenu.json'), lire('regles.json'), lire('codes.json'), lire('baremes.json', {}), lire('primes.json', { liste: [] }), lire('courriers.json', { modeles: [] })]);
   const { aValider, ...r } = regles;
   const aujourdhui = new Date().toLocaleDateString('sv-SE');
   const pt = valeurAu(baremes.pointIndice, aujourdhui), im = valeurAu(baremes.indiceMinimum, aujourdhui), sm = valeurAu(baremes.smic, aujourdhui);
@@ -90,7 +90,7 @@ export async function chargerConfig(prefixe = '../') {
   for (const x of listePrimes) if (x.statut && x.statut !== 'officiel') valider.push('primes.' + x.id);
   for (const c of primes.aValider || []) valider.push('primes.' + c);
   return {
-    ...contenu, regles: r, aValider: valider, baremes: { ...baremes, actuels: { pt, im, sm } }, grilles: (baremes.grilles || []).filter((g) => g && g.nom), primes: listePrimes,
+    ...contenu, regles: r, aValider: valider, baremes: { ...baremes, actuels: { pt, im, sm } }, grilles: (baremes.grilles || []).filter((g) => g && g.nom), primes: listePrimes, courriers: { formule: courriers.formule, modeles: (courriers.modeles || []).filter((m) => m && m.id && m.titre && m.texte) },
     codes: (codes || []).filter((c) => c && c.code).map((c) => ({ ...c, code: String(c.code).trim() })),
     contacts: contenu.contacts || {}, reseaux: contenu.reseaux || {},
     metiers: (contenu.metiers || []).filter(Boolean), actualites: contenu.actualites || [], agenda: contenu.agenda || []
