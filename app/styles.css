@@ -237,7 +237,7 @@ nav.bas svg.i{width:1.375rem;height:1.375rem}
 }
 
 /* En-tête : logo, bouton Aa */
-.marque img.logo{height:1.75rem;width:auto;max-width:6rem;object-fit:contain;display:block}
+.marque img.logo{height:2.25rem;width:auto;max-width:6rem;object-fit:contain;display:block}
 .btn-icone.aa{font-weight:800;font-size:1rem;letter-spacing:-.02em}
 nav.bas a{position:relative}
 nav.bas .point{position:absolute;top:4px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--rouge);box-shadow:0 0 0 2px var(--surface)}
