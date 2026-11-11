@@ -321,22 +321,49 @@ export function vueCode(p) {
 
 export function vueReport(p) {
   const y = /^\d{4}$/.test(p[1] || '') ? Number(p[1]) : Number(M.aujourdhui().slice(0, 4));
-  const v = Number(S.etat.reports[y]) || 0; const a = Math.abs(v);
+  const today = M.aujourdhui();
+  const pd = S.etat.departs[y] || {};
+  const auto = M.aDesSaisies(S.etat, y - 1) ? M.bilanAnnee(y - 1, S.etat, S.cfg, `${y - 1}-12-31`).solde : null;
+  const v = Number(pd.soldeMin) || 0; const a = Math.abs(v);
+  const defDate = pd.date || (String(y) === today.slice(0, 4) && !M.aDesSaisies(S.etat, y) ? today : `${y}-01-01`);
+  const nb = (id, lib, val, aide) => `<label class="champ"><span>${lib}</span><input type="number" inputmode="numeric" min="0" max="400" id="${id}" value="${val || ''}" placeholder="0">${aide ? `<small class="petit">${aide}</small>` : ''}</label>`;
+  const depuisAccueil = S.vue.depuisAccueil;
   return {
-    html: `${enteteRetour(`Report ${y - 1}`, `#/compteurs/${y}`)}
+    html: `${enteteRetour(`Point de départ ${y}`, depuisAccueil ? '#/bienvenue' : `#/compteurs/${y}`)}
       <div class="page" style="margin-top:.75rem">
-        <p class="texte">Recopie le solde d'heures de ton relevé officiel au 31 décembre ${y - 1}. Il démarre ton compteur ${y}.</p>
-        <div class="segment" role="group" aria-label="Signe"><button type="button" data-s="1" aria-pressed="${v >= 0}">Heures en plus</button><button type="button" data-s="-1" aria-pressed="${v < 0}">Heures en moins</button></div>
-        <div class="rangee"><label class="champ"><span>Heures</span><input type="number" inputmode="numeric" id="h" min="0" max="999" value="${Math.floor(a / 60)}"></label><label class="champ"><span>Minutes</span><input type="number" inputmode="numeric" id="m" min="0" max="59" value="${a % 60}"></label></div>
+        <p class="texte">Tu commences à suivre ton temps en cours d'année ? Recopie ici ce qui s'est passé avant, d'après ton dernier relevé d'heures (écran Octime, relevé papier ou demande à ton cadre). L'appli part de ces chiffres.</p>
+        <label class="champ"><span>Je commence le suivi le</span><input type="date" id="date" min="${y}-01-01" max="${y}-12-31" value="${esc(defDate)}"></label>
+        <div class="carte" style="display:flex;flex-direction:column;gap:.75rem">
+          <h2>Mon solde d'heures à cette date</h2>
+          <div class="segment" role="group" aria-label="Signe"><button type="button" data-s="1" aria-pressed="${v >= 0}">Heures en plus</button><button type="button" data-s="-1" aria-pressed="${v < 0}">Heures en moins</button></div>
+          <div class="rangee"><label class="champ"><span>Heures</span><input type="number" inputmode="numeric" id="h" min="0" max="999" value="${Math.floor(a / 60) || ''}" placeholder="0"></label><label class="champ"><span>Minutes</span><input type="number" inputmode="numeric" id="m" min="0" max="59" value="${a % 60 || ''}" placeholder="0"></label></div>
+          ${auto !== null ? `<button type="button" class="btn petit-btn" id="auto" style="align-self:flex-start">Reprendre mon solde ${y - 1} calculé : ${M.formatDuree(auto, true)}</button>` : ''}
+        </div>
+        <div class="carte" style="display:flex;flex-direction:column;gap:.75rem">
+          <h2>Déjà pris ou travaillés depuis le 1<sup>er</sup> janvier</h2>
+          <div class="rangee">${nb('rttPris', 'RTT pris', pd.rttPris)}${nb('caPris', 'Congés annuels pris', pd.caPris)}</div>
+          <div class="rangee">${nb('caHorsSaison', 'Dont congés hors saison', pd.caHorsSaison, 'Pris avant mai ou après octobre')}${nb('djfJours', 'Dimanches et fériés travaillés', pd.djfJours)}</div>
+        </div>
+        <p class="petit" style="margin:0">Pas tous les chiffres ? Remplis ce que tu as : tu pourras compléter plus tard depuis Compteurs › Point de départ.</p>
         <button class="btn principal plein" id="ok">Enregistrer</button>
+        ${S.etat.departs[y] ? '<button class="btn plein danger" id="suppr">Supprimer le point de départ</button>' : ''}
       </div>`,
     apres(el) {
       let signe = v < 0 ? -1 : 1;
-      el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => { signe = Number(b.dataset.s); el.querySelectorAll('[data-s]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); });
+      const signer = (x) => { signe = x; el.querySelectorAll('[data-s]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.s) === x))); };
+      el.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => signer(Number(b.dataset.s)));
+      const au = el.querySelector('#auto');
+      if (au) au.onclick = () => { signer(auto < 0 ? -1 : 1); el.querySelector('#h').value = Math.floor(Math.abs(auto) / 60); el.querySelector('#m').value = Math.abs(auto) % 60; el.querySelector('#date').value = `${y}-01-01`; };
+      const fin = () => { if (depuisAccueil) { S.vue.depuisAccueil = false; S.vue.bv = { ...(S.vue.bv || {}), etape: 3 }; aller('#/bienvenue'); } else aller(`#/compteurs/${y}`); };
       el.querySelector('#ok').onclick = () => {
-        const t = (Number(el.querySelector('#h').value) || 0) * 60 + Math.min(59, Number(el.querySelector('#m').value) || 0);
-        S.etat.reports[y] = signe * t; sauver(); toast('Report enregistré'); aller(`#/compteurs/${y}`);
+        const n = (id) => Math.max(0, Number(el.querySelector('#' + id).value) || 0);
+        const date = el.querySelector('#date').value || `${y}-01-01`;
+        if (date.slice(0, 4) !== String(y)) { toast(`Choisis une date en ${y}`); return; }
+        S.etat.departs[y] = { date, soldeMin: signe * (n('h') * 60 + Math.min(59, n('m'))), rttPris: n('rttPris'), caPris: n('caPris'), caHorsSaison: Math.min(n('caHorsSaison'), n('caPris')), djfJours: n('djfJours') };
+        sauver(); toast('Point de départ enregistré'); fin();
       };
+      const s = el.querySelector('#suppr');
+      if (s) s.onclick = () => { delete S.etat.departs[y]; sauver(); toast('Point de départ supprimé'); fin(); };
     }
   };
 }
@@ -476,7 +503,7 @@ export function vueBienvenue() {
     apres(el) { el.querySelector('#suivant').onclick = () => { B.etape = 2; S.rendre(); }; }
   };
   if (B.etape === 2) return {
-    html: `${enTete}<p class="etiquette">Étape 1 sur 2</p><h1>Ton poste</h1><p class="texte">Pour calculer ce que tu dois. Tout reste modifiable dans les réglages.</p></div>
+    html: `${enTete}<p class="etiquette">Étape 1 sur 3</p><h1>Ton poste</h1><p class="texte">Pour calculer ce que tu dois. Tout reste modifiable dans les réglages.</p></div>
       <div class="page" style="margin-top:1rem">
         <label class="champ"><span>Prénom (facultatif)</span><input id="prenom" value="${esc(B.prenom)}" autocomplete="given-name"></label>
         <label class="champ"><span>Métier</span><select id="metier"><option value="">Choisir…</option>${S.cfg.metiers.map((m) => `<option ${B.metier === m ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></label>
@@ -486,12 +513,29 @@ export function vueBienvenue() {
     apres(el) {
       el.querySelector('#suivant').onclick = () => {
         B.prenom = el.querySelector('#prenom').value.trim(); B.metier = el.querySelector('#metier').value; B.quotite = Number(el.querySelector('#quotite').value);
-        S.etat.profil = { prenom: B.prenom, metier: B.metier, quotite: B.quotite, service: '' }; sauver(); B.etape = 3; S.rendre();
+        S.etat.profil = { prenom: B.prenom, metier: B.metier, quotite: B.quotite, service: '' }; sauver(); B.etape = 'depart'; S.rendre();
       };
     }
   };
+  if (B.etape === 'depart') {
+    const y = Number(M.aujourdhui().slice(0, 4));
+    return {
+      html: `${enTete}<p class="etiquette">Étape 2 sur 3</p><h1>Et depuis janvier ?</h1><p class="texte">Tu installes l'appli en cours d'année : ton solde d'heures, tes RTT et tes congés ont déjà bougé. Pour des compteurs justes, l'appli doit partir du bon point.</p></div>
+        <div class="page" style="margin-top:1.25rem">
+          <button class="btn principal plein" id="releve">Je recopie mon dernier relevé (2 min)</button>
+          <button class="btn plein" id="zero">Je commence aujourd'hui, sans historique</button>
+          <button class="btn plein" id="janvier">Je saisirai tout depuis le 1ᵉʳ janvier</button>
+          <p class="petit" style="margin:0">Le relevé, c'est ton compteur d'heures sur Octime ou sur papier. Tu pourras le recopier plus tard dans Compteurs › Point de départ.</p>
+        </div>`,
+      apres(el) {
+        el.querySelector('#releve').onclick = () => { S.vue.depuisAccueil = true; aller(`#/report/${y}`); };
+        el.querySelector('#zero').onclick = () => { S.etat.departs[y] = { date: M.aujourdhui(), soldeMin: 0 }; sauver(); B.etape = 3; S.rendre(); };
+        el.querySelector('#janvier').onclick = () => { B.etape = 3; S.rendre(); };
+      }
+    };
+  }
   return {
-    html: `${enTete}<p class="etiquette">Étape 2 sur 2</p><h1>On fait un tour ?</h1><p class="texte">En deux minutes, avec un faux planning : tu touches, tu essaies, rien n'est enregistré. Ensuite, ton vrai planning t'attend.</p></div>
+    html: `${enTete}<p class="etiquette">Étape 3 sur 3</p><h1>On fait un tour ?</h1><p class="texte">En deux minutes, avec un faux planning : tu touches, tu essaies, rien n'est enregistré. Ensuite, ton vrai planning t'attend.</p></div>
       <div class="page" style="margin-top:1.5rem">
         <button class="btn principal plein" id="essai">Faire la visite guidée</button>
         <button class="btn plein" id="direct">Commencer directement</button>

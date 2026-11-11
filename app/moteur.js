@@ -182,14 +182,18 @@ export function bilanPeriode(debut, fin, etat, cfg) {
   return { theorique: theo, realise: credit, solde: credit - theo, saisis, total, depassements: depass, nuit, manquants };
 }
 
-export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui()) {
+export const aDesSaisies = (etat, annee) => Object.keys(etat.jours || {}).some((d) => d.startsWith(annee + '-'));
+
+export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui(), profondeur = 0) {
   const codes = tousLesCodes(cfg, etat);
   const debut = iso(annee, 1, 1);
   const finAnnee = iso(annee, 12, 31);
   const fin = jusqua < finAnnee ? jusqua : finAnnee;
-  // Le suivi commence au premier jour saisi : les jours d'avant ne comptent pas dans le solde.
-  const premiere = Object.keys(etat.jours || {}).sort()[0] || fin;
-  const depart = premiere > debut ? premiere : debut;
+  // Point de départ : saisi par l'agent (installation en cours d'année, relevé officiel),
+  // sinon le premier jour saisi. Les jours d'avant ne comptent pas dans le solde.
+  const pd = (etat.departs || {})[annee] || null;
+  const premiere = Object.keys(etat.jours || {}).filter((d) => d >= debut).sort()[0] || fin;
+  let depart = pd && pd.date >= debut && pd.date <= finAnnee ? pd.date : (premiere > debut ? premiere : debut);
   const mois = [];
   for (let m = 1; m <= 12; m++) {
     const a = iso(annee, m, 1), b = iso(annee, m, joursDansMois(annee, m));
@@ -200,14 +204,19 @@ export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui()) {
     theorique: s.theorique + x.theorique, realise: s.realise + x.realise, depassements: s.depassements + x.depassements,
     nuit: s.nuit + x.nuit, saisis: s.saisis + x.saisis, total: s.total + x.total, manquants: s.manquants.concat(x.manquants)
   }), { theorique: 0, realise: 0, depassements: 0, nuit: 0, saisis: 0, total: 0, manquants: [] });
-  const report = Number((etat.reports || {})[annee]) || 0;
+  // Solde de départ : celui saisi par l'agent, sinon le solde calculé de l'année précédente.
+  let report = 0, reportAuto = false;
+  if (pd && Number.isFinite(Number(pd.soldeMin))) report = Number(pd.soldeMin);
+  else if (aDesSaisies(etat, annee - 1) && profondeur < 3) { report = bilanAnnee(annee - 1, etat, cfg, iso(annee - 1, 12, 31), profondeur + 1).solde; reportAuto = true; }
 
   // Compteurs sur l'année entière (prévus compris) pour les congés.
   let rtt = 0, ca = 0, recup = 0, caHorsSaison = 0;
   const caJours = [];
   const djf = { minutes: 0, jours: new Set() };
   const ps = cfg.regles.periodeEstivale || { debut: '05-01', fin: '10-31' };
-  for (let n = jourNum(debut); n <= jourNum(finAnnee); n++) {
+  // Avec un point de départ, les jours d'avant sont comptés par les chiffres du relevé.
+  const debutCompte = pd ? depart : debut;
+  for (let n = jourNum(debutCompte); n <= jourNum(finAnnee); n++) {
     const d = depuisNum(n); const j = journee(d, etat, codes);
     if (!j || !j.info) continue;
     if (j.info.type === 'rtt') rtt++;
@@ -219,19 +228,22 @@ export function bilanAnnee(annee, etat, cfg, jusqua = aujourdhui()) {
     }
     if (d <= fin) { const r = minutesDJF(blocs(j)); djf.minutes += r.minutes; r.jours.forEach((x) => djf.jours.add(x)); }
   }
+  const v = (k) => (pd && Number(pd[k])) || 0;
+  rtt += v('rttPris'); ca += v('caPris'); caHorsSaison += v('caHorsSaison');
+  const djfJoursAvant = v('djfJours'), djfMinAvant = v('djfMin');
   // Jours supplémentaires : hors saison (3 à 5 CA → 1 j, 6 et plus → 2 j) et fractionnement (3 périodes de 5 jours ouvrés).
   const bonusHS = caHorsSaison >= 6 ? 2 : caHorsSaison >= 3 ? 1 : 0;
   const periodes = periodesConges(caJours, etat, codes);
   const bonusFrac = periodes.filter((p) => p >= 5).length >= 3 ? 1 : 0;
   const q = quotite(etat, cfg);
   return {
-    annee, jusqua: fin, depart: depart <= fin ? depart : null, mois, report,
+    annee, jusqua: fin, depart: depart <= fin ? depart : null, pointDepart: pd, mois, report, reportAuto,
     solde: cumul.realise - cumul.theorique + report,
     theorique: cumul.theorique, realise: cumul.realise, depassements: cumul.depassements, nuit: cumul.nuit,
     saisis: cumul.saisis, total: cumul.total, manquants: cumul.manquants,
     rttPris: rtt, rttDroit: Math.round((cfg.regles.rttParAn || 0) * q), recupPris: recup,
     caPris: ca, caDroit: Math.round((cfg.regles.caParAn || 25) * q), caHorsSaison, bonusHS, bonusFrac,
-    djfMinutes: djf.minutes, djfJours: djf.jours.size
+    djfMinutes: djf.minutes + djfMinAvant, djfJours: djf.jours.size + djfJoursAvant
   };
 }
 

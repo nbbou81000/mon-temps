@@ -26,7 +26,7 @@ async function demarrer() {
   St.protegerStockage();
   S.rendre = rendre;
   window.addEventListener('hashchange', () => rendre(true));
-  if (!S.etat.profil && !/^#\/(bienvenue|recevoir|sauvegarde|confidentialite)/.test(location.hash)) location.hash = '#/bienvenue';
+  if (!S.etat.profil && !/^#\/(bienvenue|recevoir|sauvegarde|confidentialite|report)/.test(location.hash)) location.hash = '#/bienvenue';
   else rendre(true);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('../sw.js').catch(() => {});
 }
@@ -283,7 +283,7 @@ function vueCompteurs(p) {
         <section class="carte sombre" data-tour="solde" aria-label="Solde de l'année">
           <p class="etiquette">Solde au ${M.courte(b.jusqua)}${b.depart && b.depart > `${y}-01-01` ? ` · suivi depuis le ${M.courte(b.depart)}` : ''}</p>
           <div style="display:flex;align-items:baseline;gap:.625rem;margin-top:.25rem;flex-wrap:wrap"><span style="font-size:2.75rem;line-height:1;font-weight:800;font-stretch:80%">${M.formatDuree(b.solde, true)}</span><span style="font-size:.875rem;color:var(--carte-sombre-texte)">${b.solde >= 0 ? 'au-dessus de ton dû' : 'en dessous de ton dû'}</span></div>
-          <p class="petit" style="margin:.375rem 0 0">Fait ${M.formatDuree(b.realise)} − dû ${M.formatDuree(b.theorique)}${b.report ? ` · report ${M.formatDuree(b.report, true)}` : ''}${badgeProvisoire(S.cfg, 'regles.valeurJourneeHeures')}</p>
+          <p class="petit" style="margin:.375rem 0 0">Fait ${M.formatDuree(b.realise)} − dû ${M.formatDuree(b.theorique)}${b.report ? ` · ${b.reportAuto ? `report ${y - 1}` : 'solde de départ'} ${M.formatDuree(b.report, true)}` : ''}${badgeProvisoire(S.cfg, 'regles.valeurJourneeHeures')}</p>
           <div class="barres" role="img" aria-label="Solde de chaque mois">${barres}</div>
           <div class="barres-l" aria-hidden="true">${'JFMAMJJASOND'.split('').map((l) => `<span>${l}</span>`).join('')}</div>
         </section>
@@ -303,7 +303,7 @@ function vueCompteurs(p) {
           <p class="petit" style="padding:.5rem .875rem .75rem;margin:0;border-top:1px solid var(--filet2)">Vérifié sur tes saisies. Une alerte répétée ? Parles-en à la CGT.</p>`
           : '<p class="petit" style="padding:0 .875rem .875rem;margin:0">Contrôles désactivés dans les réglages.</p>'}
         </section>
-        <div class="rangee"><a class="btn" href="#/releve/${y}">${ic('imprimer')}Relevé annuel</a><a class="btn" href="#/report/${y}">Report ${y - 1}</a></div>
+        <div class="rangee"><a class="btn" href="#/releve/${y}">${ic('imprimer')}Relevé annuel</a><a class="btn" href="#/report/${y}">Point de départ</a></div>
       </div>`,
     apres(el) { const t = el.querySelector('#toutes'); if (t) t.onclick = () => { S.vue.toutesAlertes = true; S.rendre(); }; }
   };

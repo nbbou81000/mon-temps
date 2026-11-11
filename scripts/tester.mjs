@@ -33,7 +33,7 @@ t('service coupé', M.dureeEffectiveCode({ debut: '07:00', fin: '11:00', debut2:
 t('heures de nuit', M.minutesNuit([[M.jourNum('2026-01-05') * 1440 + 20 * 60, M.jourNum('2026-01-05') * 1440 + 31 * 60]], cfg) === 540);
 
 // Semaine type sans infraction
-const etat = { profil: { quotite: 100 }, jours: {}, preuves: [], codesPerso: [], reports: {} };
+const etat = { profil: { quotite: 100 }, jours: {}, preuves: [], codesPerso: [], departs: {} };
 const code = cfg.codes.find((c) => c.type === 'travail').code;
 for (let n = M.jourNum('2026-03-02'); n < M.jourNum('2026-03-30'); n++) {
   const d = M.depuisNum(n); etat.jours[d] = { prevu: { code: M.jourSemaine(d) >= 5 ? 'RH' : code } };
@@ -47,6 +47,14 @@ t('repos < 12h détecté', M.controles('2026-03-02', '2026-03-29', etat, cfg).so
 // Bilan : un congé ne compte pas dans le dû
 const b = M.bilanPeriode('2026-03-02', '2026-03-06', { ...etat, jours: { '2026-03-02': { prevu: { code: 'CA' } } } }, cfg);
 t('congé retiré du dû', b.theorique === 4 * cfg.regles.valeurJourneeHeures * 60);
+
+// Point de départ en cours d'année et report automatique d'une année sur l'autre
+const e2 = { profil: { quotite: 100 }, jours: { '2026-11-02': { prevu: { code } } }, preuves: [], codesPerso: [], departs: { 2026: { date: '2026-11-02', soldeMin: 600, rttPris: 10, caPris: 20 } } };
+const b26 = M.bilanAnnee(2026, e2, cfg, '2026-11-02');
+t('point de départ : solde repris', b26.report === 600 && b26.depart === '2026-11-02');
+t('point de départ : RTT et CA repris', b26.rttPris === 10 && b26.caPris === 20);
+const b27 = M.bilanAnnee(2027, e2, cfg, '2027-01-01');
+t('report automatique au 1er janvier', b27.reportAuto === true && b27.report === M.bilanAnnee(2026, e2, cfg, '2026-12-31').solde);
 
 console.log(`${ok} tests réussis, ${ko} en échec`);
 if (ko) process.exit(1);

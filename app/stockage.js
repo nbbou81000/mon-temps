@@ -5,7 +5,7 @@ const BASE = 'mon-temps', MAGASIN = 'etat', CLE = 'principal';
 export const FORMAT = 'mon-temps/sauvegarde';
 
 export function etatVide() {
-  return { version: 1, profil: null, jours: {}, preuves: [], codesPerso: [], reports: {}, reglages: { theme: 'auto', taille: 0, controles: true }, derniereSauvegarde: null, creeLe: new Date().toISOString() };
+  return { version: 1, profil: null, jours: {}, preuves: [], codesPerso: [], departs: {}, reglages: { theme: 'auto', taille: 0, controles: true }, derniereSauvegarde: null, creeLe: new Date().toISOString() };
 }
 
 function ouvrir() {
@@ -57,7 +57,12 @@ export function normaliser(e) {
   const base = etatVide();
   const out = { ...base, ...e };
   out.reglages = { ...base.reglages, ...(e.reglages || {}) };
-  for (const k of ['jours', 'reports']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  for (const k of ['jours', 'departs']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  // Ancien format : « reports » (solde au 1er janvier) devient un point de départ au 1er janvier.
+  if (e.reports && typeof e.reports === 'object') {
+    for (const [a, m] of Object.entries(e.reports)) if (!out.departs[a] && Number(m)) out.departs[a] = { date: `${a}-01-01`, soldeMin: Number(m) };
+    delete out.reports;
+  }
   for (const k of ['preuves', 'codesPerso']) if (!Array.isArray(out[k])) out[k] = [];
   return out;
 }
